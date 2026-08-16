@@ -1,11 +1,11 @@
 ## 更新内容
 
-### 新功能
+### 修复
 
-- 首个发布版本：Electron / CEF / NW.js / Tauri / Wails 与完整浏览器全家检测
-- 存储占用统计（应用本体 + ~/Library 用户数据）与在线版本健康度分档
+- 安装体验修复：DMG 改为标准安装布局（应用 + Applications 文件夹链接），打开即可拖入安装
+- 从安装镜像直接运行时弹窗引导先安装到 Applications（只读卷上自动更新无法工作）
 
-### 优化与体验
+### 代码质量
 
-- Sparkle 自动更新集成；三语官网与 README；GitHub Actions 自动构建 · 签名 · 公证 · 发布
+- CI 用 GITHUB_RUN_NUMBER 作为 CFBundleVersion，修复浅克隆下 build 号恒为 1、Sparkle 无法判断更新的问题
 
