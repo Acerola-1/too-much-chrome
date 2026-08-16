@@ -26,7 +26,7 @@ DISPLAY_NAME="Too Much Chrome"
 BUNDLE_ID="${BUNDLE_ID:-com.acerola.too-much-chrome}"
 SIGN_IDENTITY="${SIGN_IDENTITY:-Developer ID Application: jiliang mo (VTQ6S5M4K3)}"
 TEAM_ID="${TEAM_ID:-VTQ6S5M4K3}"
-VERSION="${VERSION:-0.1.0}"
+VERSION="${VERSION:-0.1.1}"
 # CFBundleVersion：Sparkle 依赖其单调递增来判断新版本，默认取 git 提交数
 BUILD="${BUILD:-$(git rev-list --count HEAD 2>/dev/null || echo 1)}"
 NOTARY_PROFILE="${NOTARY_PROFILE:-tmc-notary}"
@@ -180,13 +180,19 @@ fi
 # ---- DMG ----
 if [[ "$MODE" == "dmg" ]]; then
   DMG=".build/${APP_NAME}-${VERSION}.dmg"
-  echo "==> 生成 DMG（${DMG}）"
+  echo "==> 生成安装式 DMG（${DMG}）"
   rm -f "$DMG"
-  hdiutil create -volname "$DISPLAY_NAME" -srcfolder "$APP" -ov -format UDZO "$DMG" >/dev/null
+  DMG_ROOT=".build/dmg-root"
+  rm -rf "$DMG_ROOT"
+  mkdir -p "$DMG_ROOT"
+  cp -R "$APP" "$DMG_ROOT/"
+  # 标准安装布局：应用 + Applications 文件夹链接，打开即"拖入安装"
+  ln -s /Applications "$DMG_ROOT/Applications"
+  hdiutil create -volname "$DISPLAY_NAME" -srcfolder "$DMG_ROOT" -ov -format UDZO "$DMG" >/dev/null
   if [[ "$SKIP_NOTARY" -eq 0 ]]; then
     codesign --sign "$SIGN_IDENTITY" --timestamp "$DMG"
     xcrun notarytool submit "$DMG" "${NOTARY_ARGS[@]}" --wait
     xcrun stapler staple "$DMG"
   fi
-  echo "✓ 分发物就绪：$DMG"
+  echo "✓ 分发物就绪：${DMG}"
 fi

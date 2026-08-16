@@ -58,6 +58,10 @@ jobs:
           } >> "$GITHUB_ENV"
 
       - name: 构建、签名、公证并打包 DMG
+        env:
+          # Sparkle 靠 CFBundleVersion 单调递增判断更新；CI 浅克隆下 git 提交数恒为 1，
+          # 故改用 run number（与 hagimi 的 CURRENT_PROJECT_VERSION 做法一致）
+          BUILD: ${{ github.run_number }}
         run: ./scripts/build-app.sh dmg
 
       - name: 打包 Sparkle 更新 ZIP
