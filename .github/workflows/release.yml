@@ -9,11 +9,17 @@ permissions:
 
 jobs:
   release:
-    runs-on: macos-latest
+    runs-on: macos-26
     steps:
       - uses: actions/checkout@v4
 
-      # 可选：注入 Developer ID 证书后自动签名 + 公证；
+      - name: Select Xcode
+        run: |
+          if [ -d /Applications/Xcode_26.6.app ]; then
+            sudo xcode-select -s /Applications/Xcode_26.6.app/Contents/Developer
+          fi
+
+      # 注入 Developer ID 证书后自动签名 + 公证；
       # 缺省（未配置 secrets）时 adhoc 签名出包，安装时需右键打开。
       # 需要的 secrets：
       #   DEVELOPER_ID_P12          — base64 编码的 .p12 证书导出
@@ -21,6 +27,7 @@ jobs:
       #   SIGN_IDENTITY             — 证书名，如 "Developer ID Application: xxx (TEAMID)"
       #   NOTARY_APPLE_ID           — Apple ID 邮箱
       #   NOTARY_PASSWORD           — App 专用密码
+      #   TEAM_ID                   — 开发者团队号
       - name: 导入 Developer ID 证书
         if: ${{ secrets.DEVELOPER_ID_P12 != '' }}
         env:
@@ -39,7 +46,7 @@ jobs:
           echo "NOTARY_PASSWORD=${{ secrets.NOTARY_PASSWORD }}" >> "$GITHUB_ENV"
           echo "TEAM_ID=${{ secrets.TEAM_ID }}" >> "$GITHUB_ENV"
 
-      - name: 构建并打包 DMG
+      - name: 构建、签名、公证并打包 DMG
         run: ./scripts/build-app.sh dmg
 
       - name: 发布 Release
@@ -48,7 +55,17 @@ jobs:
         run: |
           TAG="${GITHUB_REF_NAME}"
           VERSION="${TAG#v}"
-          gh release create "$TAG" \
-            --title "Too Much Chrome ${VERSION}" \
-            --generate-notes \
+          ARGS=(--title "Too Much Chrome ${VERSION}" --generate-notes)
+          if [ -f RELEASE_NOTES.md ]; then
+            ARGS+=(--notes-file RELEASE_NOTES.md)
+          fi
+          gh release create "$TAG" "${ARGS[@]}" \
             ".build/TooMuchChrome-${VERSION}.dmg"
+
+      - name: 部署官网到 GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: docs
+          publish_branch: gh-pages
+          keep_files: true
