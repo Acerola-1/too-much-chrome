@@ -1,9 +1,8 @@
 import Foundation
 
 // MARK: - 在线版本基准
-// 官方公开源（无需鉴权）：
-//   Electron → npm registry · Chromium → Google VersionHistory API
-//   Tauri → crates.io（要求 User-Agent）· Wails → Go module proxy
+// 数据源：npm registry（Electron）· Google VersionHistory（Chromium）·
+// crates.io（Tauri，要求 User-Agent）· Go module proxy（Wails）。
 // 缓存 24h；单项失败沿用缓存值，全部失败退内置常数（VersionBands.builtIn*）。
 
 public struct VersionBaseline: Codable, Equatable {

@@ -109,7 +109,23 @@ public enum VersionBands {
         major >= 20
     }
 
-    /// Electron：锚-2 内当前（官方支持窗口）· 锚-7 内正常 · 锚-12 内建议更新 · 更早老旧
+    /// 按应用类型分档（GUI 与 tmc-scan 共用；latest 为在线基准，nil 时用内置锚）
+public static func status(for type: AppType, version: String?, latest: VersionBaseline?) -> VersionStatus {
+    switch type {
+    case .electron:
+        return electronStatus(version, latestMajor: latest?.electronMajor)
+    case .cef, .browser:
+        return chromiumStatus(version, latestMajor: latest?.chromiumMajor)
+    case .tauri:
+        return tauriStatus(version, latest: latest?.tauriVersion)
+    case .wails:
+        return wailsStatus(version, latest: latest?.wailsVersion)
+    case .nwjs:
+        return .unknown
+    }
+}
+
+/// Electron：锚-2 内当前（官方支持窗口）· 锚-7 内正常 · 锚-12 内建议更新 · 更早老旧
     public static func electronStatus(_ version: String?, latestMajor: Int? = nil) -> VersionStatus {
         guard let m = major(version), plausibleEngineMajor(m) else { return .unknown }
         let latest = latestMajor ?? builtInElectronMajor

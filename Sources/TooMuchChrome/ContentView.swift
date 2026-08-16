@@ -2,9 +2,7 @@ import SwiftUI
 import AppKit
 import TooMuchChromeCore
 
-// MARK: - 主界面：浮动玻璃工具栏（单行）+ 7 列图标网格 + 浮动玻璃报告卡片
-// 全窗口连续背景，工具栏与面板为悬浮圆角玻璃卡片；原生标题栏已隐藏（.hiddenTitleBar），
-// 红绿灯由工具栏左侧留白让位。
+// MARK: - 主界面：浮动玻璃工具栏 + 7 列图标网格 + 浮动玻璃报告卡片
 
 struct ContentView: View {
     @Environment(ScanViewModel.self) private var model
@@ -206,10 +204,7 @@ private struct GlassSegmentedFilter: View {
     private func segment(_ type: AppType?) -> some View {
         let selected = model.filter == type
         let label = type?.label ?? "全部"
-        let count: Int = {
-            guard let type else { return model.apps.count }
-            return model.apps.filter { $0.type == type }.count
-        }()
+        let count = type.flatMap { model.typeCountsAll[$0] } ?? model.apps.count
         return Button {
             select(type)
         } label: {

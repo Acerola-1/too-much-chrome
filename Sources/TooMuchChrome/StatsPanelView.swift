@@ -153,7 +153,8 @@ struct StatsPanelView: View {
         var segs: [DonutSegment] = []
         for item in items {
             let fraction = CGFloat(item.count) / CGFloat(max(1, total))
-            if fraction > 0 {
+            // 小于间隙的分段跳过，避免负角度弧段
+            if fraction > gap {
                 segs.append(DonutSegment(
                     id: item.type.rawValue,
                     start: acc + gap,

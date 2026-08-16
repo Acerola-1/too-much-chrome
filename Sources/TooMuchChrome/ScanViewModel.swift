@@ -85,32 +85,27 @@ final class ScanViewModel {
             .compactMap { type in counts[type].map { TypeCount(type: type, count: $0) } }
     }
 
+    /// 未过滤的全量类型计数（过滤分段条的固定底数）
+    var typeCountsAll: [AppType: Int] {
+        Dictionary(grouping: apps, by: \.type).mapValues(\.count)
+    }
+
     var top5: [DetectedApp] {
         filteredApps.sorted { $0.totalBytes > $1.totalBytes }.prefix(5).map { $0 }
     }
 
-    /// 展示用健康状态：优先按在线基准动态分档；基准缺失时 Electron/CEF
-    /// 仍有内置锚可用，Tauri/Wails 无锚则显示 unknown。
-    /// 浏览器（Chromium 系）按应用主版本对 Chromium 基准分档
+    /// 展示用健康状态（GUI 与 CLI 共用 VersionBands.status 判定）
     func displayStatus(for app: DetectedApp) -> VersionStatus {
-        switch app.type {
-        case .electron:
-            return VersionBands.electronStatus(app.version, latestMajor: baseline?.electronMajor)
-        case .cef, .browser:
-            return VersionBands.chromiumStatus(app.version, latestMajor: baseline?.chromiumMajor)
-        case .tauri:
-            return VersionBands.tauriStatus(app.version, latest: baseline?.tauriVersion)
-        case .wails:
-            return VersionBands.wailsStatus(app.version, latest: baseline?.wailsVersion)
-        case .nwjs:
-            return .unknown
-        }
+        VersionBands.status(for: app.type, version: app.version, latest: baseline)
     }
 
     var healthCounts: [(status: VersionStatus, count: Int)] {
-        VersionStatus.allCases.compactMap { status in
-            let n = filteredApps.filter { displayStatus(for: $0) == status }.count
-            return n > 0 ? (status, n) : nil
+        var counts: [VersionStatus: Int] = [:]
+        for app in filteredApps {
+            counts[displayStatus(for: app), default: 0] += 1
+        }
+        return VersionStatus.allCases.compactMap { status in
+            counts[status].map { (status, $0) }
         }
     }
 
@@ -139,7 +134,11 @@ final class ScanViewModel {
                 AppScanner.detect(at: url)
             }).value
             if let app = detected {
-                icons[app.id] = NSWorkspace.shared.icon(forFile: url.path)
+                // 图标读取走后台线程，主线程只做字典写入
+                let icon = await Task.detached(priority: .utility, operation: {
+                    NSWorkspace.shared.icon(forFile: url.path)
+                }).value
+                icons[app.id] = icon
                 apps.append(app)
                 phase = .scanning(found: apps.count, seen: seenCandidates)
             }
