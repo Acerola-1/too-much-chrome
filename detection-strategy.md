@@ -18,6 +18,11 @@
 | **CEF** | `Chromium Embedded Framework.framework` | `Foo.app/Contents/Frameworks/Chromium Embedded Framework.framework` |
 | **NW.js** | `nwjs Framework.framework` 或 `nwjs` 相关 | `Foo.app/Contents/Frameworks/nwjs Framework.framework` |
 
+> **改名构建的补充特征（2026-08 实测）**：部分厂商会重命名框架目录躲过名称匹配
+> （如 QQ NT 的 `QQNT.framework`），但框架 Info.plist 的 `CFBundleIdentifier`
+> 仍为 `com.github.Electron.framework`——目录名与 plist Bundle ID 应双特征匹配。
+> 版本号此时读框架 plist 的 `CFBundleVersion`（QQ 为 40.0.0）。
+
 **版本号获取：**
 - Electron: 读取 `Electron Framework.framework/Versions/A/Resources/Info.plist` 中的 `CFBundleVersion`
 - CEF: 读取 `Chromium Embedded Framework.framework/Versions/A/Resources/Info.plist`
@@ -46,6 +51,15 @@
 
 **Wails 类似，替换关键词为 "wails"。**
 
+> **2026-08 校准**：Tauri release 构建**不随包携带** `tauri.conf.json`（配置在构建期编译进二进制），
+> 第 2 步对正式发布的应用基本无效。实测可靠的二进制标记（mmap 扫描主程序，≤256MB）：
+> - Tauri：`src-tauri` / `tauri-`（cargo 构建路径）出现 ≥2 次；
+>   或裸词 `tauri` ≥5 次且伴随 `.cargo`（Rust 上下文，排除 centauri 之类误报）
+> - Wails：`wailsapp`（模块路径 `github.com/wailsapp/wails`）出现即命中
+> - 已知局限：`wails build -obfuscated`（garble）会抹掉模块路径字符串，无法检测
+>
+> 本机实测命中：Clash Verge、DBX、GameHub（三者 Bundle ID 与资源目录均无 "tauri" 字样）。
+
 ### Tier 3: 完整浏览器（可选检测）
 
 用户通常知道自己在用浏览器，但为完整性可列出。
@@ -59,6 +73,11 @@
 | Arc | 应用名匹配 |
 | Vivaldi | 应用名匹配 |
 | Opera | 应用名匹配 |
+
+> **浏览器内核版本判定（2026-08 实现）**：Chromium 系浏览器的**应用主版本与内核主版本
+> 严格对齐**（Edge 79+ / Chrome / Opera / Vivaldi 均如此），因此直接读应用 Info.plist 版本
+> 对 Chromium 基准分档即可（Edge 151 = Chromium 151）。版本方案不对齐的（如 Arc 自有 1.x）
+> 由主二进制中的 `Chrome/x.y.z.w` UA 串兜底提取；提取不到则诚实显示"未知"。
 
 **注意：** 浏览器本身不是"嵌了 Chrome 的应用"，但用户可能想知道。UI 中应分组显示，避免混淆。
 
@@ -82,6 +101,28 @@
 ## 版本号与老旧判定
 
 ### Electron 版本对照表（建议标红阈值）
+
+> **2026-08 重新校准**：下表为文档初版（Electron 33 时代）的历史值，已过时约 10 个大版本。
+> 当前稳定版 **43.4.0**（Chromium ~149），官方支持窗口 = 最新 3 个主版本。现行分档
+> （实现见 `VersionBands`，锚定常数需定期重估）：
+>
+> | Electron | 状态 | 建议 |
+> |---|---|---|
+> | ≥ 41 | ✅ 当前 | 官方支持窗口内 |
+> | 36–40 | ✅ 正常 | 一年内版本 |
+> | 31–35 | ⚠️ 建议更新 | 1–2 年前版本 |
+> | ≤ 30 | 🔴 老旧 | 两年以上 |
+>
+> CEF 按 Chromium 对齐（当前稳定 151）：≥148 当前 · 139–147 正常 · 128–138 偏旧 · ≤127 老旧。
+> 另注意：部分厂商会把**应用自身版本**塞进框架 plist（实测 NeteaseMusic CEF 的 "3.1.10"、
+> aTrust 的 "11.5.0"）——大版本早于引擎存在年代时应判"未知"而非"老旧"。
+
+> **在线版本基准（2026-08 已实现，`VersionCatalog`）**：锚点不再依赖人工更新——
+> 启动后从官方源拉取最新版（Electron→npm registry · Chromium→Google VersionHistory API ·
+> Tauri→crates.io · Wails→Go module proxy），缓存 24h（~/Library/Caches/），
+> 单项失败沿用缓存值，全部失败退内置常数。Tauri/Wails 的运行时版本从主二进制提取
+> （cargo 路径 `tauri-2.10.3/…` / Go module info `wails/v2 v2.11.0`），
+> 与在线锚做主/次版本距离分档。上表仅供离线兜底参考。
 
 | Electron 版本 | Chromium 版本 | 状态 | 建议 |
 |--------------|--------------|------|------|
@@ -191,10 +232,14 @@ func detectApp(at path: String) -> DetectedApp? {
 
 ## 已知局限
 
-1. **Tauri/Wails 检测依赖开发者命名规范**，如果开发者故意隐藏特征，无法检测
+1. **Tauri/Wails 检测依赖二进制特征**，garble 等混淆构建会抹掉标记；开发者刻意隐藏时无法检测
 2. **无法区分"用了 WebView"和"基于 WebView 构建"** — 很多原生应用内嵌了网页视图，但不是 WebView 应用
 3. **动态加载的 WebView 无法检测** — 应用运行时下载的组件，静态扫描扫不到
 4. **App Store 沙箱限制** — 需要用户授权完整磁盘访问权限
+5. **改名/自研内核不在 Tier 1 特征内** — 微信的 XWeb（Chromium 派生，框架名 WCDY 等自研命名）
+   目前不检出，如需支持要单列专门签名（2026-08 实测确认）
+6. **用户数据匹配按 bundle id / 应用名**，使用自定义存储路径（如直接写 `~/Documents`）的应用会漏计；
+   现覆盖 Application Support / Caches / Containers / WebKit / Saved Application State / Logs 六处
 
 ## 参考项目
 

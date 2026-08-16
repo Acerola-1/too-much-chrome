@@ -39,9 +39,9 @@ struct DetectedApp: Identifiable {
 | 原型元素（CSS/HTML） | SwiftUI 实现 | 说明 |
 |---|---|---|
 | `.app-window` 主窗口 | `WindowGroup` + `frame(minWidth: 1100, minHeight: 700)` | 固定最小尺寸 |
-| `.toolbar` 毛玻璃工具栏 | macOS 26+ 用悬浮液态玻璃层：自定义 HStack + `.glassEffect(.regular, in: Rectangle())`，以 overlay 悬浮在网格区上方，滚动内容从玻璃下方穿过（玻璃需要背后有内容才有折射/透视质感，盖在不透明背景上会退化成普通材质）；低版本回退 `.background(.regularMaterial)` | 系统工具栏自带毛玻璃，但隐藏标题栏后需自绘 |
+| `.toolbar` 毛玻璃工具栏 | macOS 26+ 用悬浮液态玻璃层：自定义 HStack + `.glassEffect(.regular, in: Rectangle())`，以 overlay 横跨整窗悬浮在内容上方，滚动内容从玻璃下方穿过（玻璃需要背后有内容才有折射/透视质感，盖在不透明背景上会退化成普通材质）；面板间竖分割线须从工具栏下缘开始，否则会把玻璃 header 切成两半；低版本回退 `.background(.regularMaterial)` | 系统工具栏自带毛玻璃，但隐藏标题栏后需自绘 |
 | `.traffic-lights` 红绿灯窗口按钮 | 原型中为装饰性元素（含玻璃光泽与悬停操控符号）；正式版 SwiftUI 用标准 `WindowGroup` 标题栏即自动获得红绿灯，无需自绘 | 若用 `.windowStyle(.hiddenTitleBar)` 才需自绘 HStack + Circle |
-| `.filter-segment` 分段过滤器 | 胶囊形 `Button` 组（HStack）或 `Picker(.segmented)` | 原型为自定义胶囊样式，建议自绘 |
+| `.filter-segment` 分段过滤器 | 胶囊形 `Button` 组（HStack）；除点按外支持按住横扫连续切换（`DragGesture` 等宽分段命中，复刻系统分段控件/液态玻璃 tab 的拖动切换手感） | 原型为自定义胶囊样式，建议自绘 |
 | `.replay-btn` 重播按钮 | `Button` + SF Symbol `arrow.triangle.2.circlepath` | hover 效果用 `.onHover` + scaleEffect |
 | `.icon-grid` 图标网格 | `LazyVGrid(columns: Array(repeating: .init(.fixed(88)), count: 7))` | 7 列网格 |
 | `.app-icon` 应用图标 | `NSWorkspace.shared.icon(forFile: path)` → `Image(nsImage:)` | 读取真实应用图标 |

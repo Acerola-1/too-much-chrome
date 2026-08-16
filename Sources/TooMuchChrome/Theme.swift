@@ -20,16 +20,6 @@ extension View {
             background(.regularMaterial, in: shape)
         }
     }
-
-    /// 整宽玻璃条（工具栏 / 侧栏背景）
-    @ViewBuilder
-    func liquidGlassBar() -> some View {
-        if #available(macOS 26.0, *) {
-            glassEffect(.regular, in: Rectangle())
-        } else {
-            background(.regularMaterial)
-        }
-    }
 }
 
 /// 编组多个玻璃元素（macOS 26 生效；低版本透明透传）

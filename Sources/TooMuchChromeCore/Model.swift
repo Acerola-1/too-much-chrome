@@ -81,9 +81,14 @@ public struct DetectedApp: Identifiable, Sendable {
     }
 }
 
-// MARK: - 版本新旧判定（对照 detection-strategy.md 的 Electron / Chromium 表）
+// MARK: - 版本新旧判定
+// 分档锚点来自 VersionCatalog（在线基准 → 24h 缓存 → 下方内置常数），
+// Electron/CEF 按大版本带宽，Tauri/Wails 按主/次版本距离。
 
 public enum VersionBands {
+    public static let builtInElectronMajor = 43
+    public static let builtInChromiumMajor = 151
+
     static func major(_ version: String?) -> Int? {
         guard let first = version?
             .split(separator: ".")
@@ -93,25 +98,66 @@ public enum VersionBands {
         return first
     }
 
-    /// Electron 版本带：33+ 绿 / 30-32 绿 / 28-29 绿 / 25-27 黄 / <25 红
-    public static func electronStatus(_ version: String?) -> VersionStatus {
-        guard let m = major(version) else { return .unknown }
+    static func minor(_ version: String?) -> Int? {
+        guard let parts = version?.split(separator: "."), parts.count > 1 else { return nil }
+        return Int(parts[1].filter(\.isNumber))
+    }
+
+    /// 框架 plist 里可能是厂商塞入的应用版本（如 "3.1.10"），
+    /// 早于引擎存在年代的大版本视为不可判定，避免误报"老旧"
+    private static func plausibleEngineMajor(_ major: Int) -> Bool {
+        major >= 20
+    }
+
+    /// Electron：锚-2 内当前（官方支持窗口）· 锚-7 内正常 · 锚-12 内建议更新 · 更早老旧
+    public static func electronStatus(_ version: String?, latestMajor: Int? = nil) -> VersionStatus {
+        guard let m = major(version), plausibleEngineMajor(m) else { return .unknown }
+        let latest = latestMajor ?? builtInElectronMajor
         switch m {
-        case 33...: return .current
-        case 28...32: return .ok
-        case 25...27: return .aging
+        case (latest - 2)...: return .current
+        case (latest - 7)...: return .ok
+        case (latest - 12)...: return .aging
         default: return .outdated
         }
     }
 
-    /// CEF 版本与 Chromium 对齐（CEF 120 = Chromium 120）
-    public static func chromiumStatus(_ version: String?) -> VersionStatus {
-        guard let m = major(version) else { return .unknown }
+    /// CEF 版本与 Chromium 对齐：锚-3 / 锚-12 / 锚-23（Chromium 四周一版）
+    public static func chromiumStatus(_ version: String?, latestMajor: Int? = nil) -> VersionStatus {
+        guard let m = major(version), plausibleEngineMajor(m) else { return .unknown }
+        let latest = latestMajor ?? builtInChromiumMajor
         switch m {
-        case 130...: return .current
-        case 120...129: return .ok
-        case 114...119: return .aging
+        case (latest - 3)...: return .current
+        case (latest - 12)...: return .ok
+        case (latest - 23)...: return .aging
         default: return .outdated
         }
+    }
+
+    /// Tauri 运行时版本分档（latest 来自 crates.io；无基准则不判定）
+    public static func tauriStatus(_ version: String?, latest: String?) -> VersionStatus {
+        runtimeStatus(version, latest: latest)
+    }
+
+    /// Wails 运行时版本分档（latest 来自 Go module proxy）
+    public static func wailsStatus(_ version: String?, latest: String?) -> VersionStatus {
+        runtimeStatus(version, latest: latest)
+    }
+
+    /// 运行时分档：主版本相等时，次版本距锚 ≤2 当前、≤6 正常、更远偏旧；
+    /// 主版本落后 1 代偏旧、≥2 代老旧（Tauri/Wails 主版本仅 1/2 量级，
+    /// 不适用 plausibleEngineMajor 的 ≥20 防线）
+    static func runtimeStatus(_ version: String?, latest: String?) -> VersionStatus {
+        guard let version, let latest,
+              let vMaj = major(version), let lMaj = major(latest),
+              vMaj > 0, lMaj > 0
+        else { return .unknown }
+        let vMin = minor(version) ?? 0
+        let lMin = minor(latest) ?? 0
+        if vMaj == lMaj {
+            if vMin >= lMin - 2 { return .current }
+            if vMin >= lMin - 6 { return .ok }
+            return .aging
+        }
+        return vMaj <= lMaj - 2 ? .outdated : .aging
     }
 }

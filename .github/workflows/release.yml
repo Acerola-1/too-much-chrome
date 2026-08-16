@@ -1,0 +1,54 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # 可选：注入 Developer ID 证书后自动签名 + 公证；
+      # 缺省（未配置 secrets）时 adhoc 签名出包，安装时需右键打开。
+      # 需要的 secrets：
+      #   DEVELOPER_ID_P12          — base64 编码的 .p12 证书导出
+      #   DEVELOPER_ID_P12_PASSWORD — .p12 导出密码
+      #   SIGN_IDENTITY             — 证书名，如 "Developer ID Application: xxx (TEAMID)"
+      #   NOTARY_APPLE_ID           — Apple ID 邮箱
+      #   NOTARY_PASSWORD           — App 专用密码
+      - name: 导入 Developer ID 证书
+        if: ${{ secrets.DEVELOPER_ID_P12 != '' }}
+        env:
+          P12: ${{ secrets.DEVELOPER_ID_P12 }}
+          P12_PASSWORD: ${{ secrets.DEVELOPER_ID_P12_PASSWORD }}
+        run: |
+          cert="$(mktemp -d)/cert.p12"
+          printf '%s' "$P12" | base64 --decode > "$cert"
+          security create-keychain -p ci ci.keychain
+          security default-keychain -s ci.keychain
+          security unlock-keychain -p ci ci.keychain
+          security import "$cert" -k ci.keychain -P "$P12_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple: -k ci ci.keychain
+          echo "SIGN_IDENTITY=${{ secrets.SIGN_IDENTITY }}" >> "$GITHUB_ENV"
+          echo "APPLE_ID=${{ secrets.NOTARY_APPLE_ID }}" >> "$GITHUB_ENV"
+          echo "NOTARY_PASSWORD=${{ secrets.NOTARY_PASSWORD }}" >> "$GITHUB_ENV"
+          echo "TEAM_ID=${{ secrets.TEAM_ID }}" >> "$GITHUB_ENV"
+
+      - name: 构建并打包 DMG
+        run: ./scripts/build-app.sh dmg
+
+      - name: 发布 Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          VERSION="${TAG#v}"
+          gh release create "$TAG" \
+            --title "Too Much Chrome ${VERSION}" \
+            --generate-notes \
+            ".build/TooMuchChrome-${VERSION}.dmg"

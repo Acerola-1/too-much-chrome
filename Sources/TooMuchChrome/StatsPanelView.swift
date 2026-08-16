@@ -24,19 +24,7 @@ struct StatsPanelView: View {
             }
             .padding(20)
         }
-        // 玻璃面板叠在带微弱色彩渐变的底上，透出玻璃质感（纯色底会退化成普通材质）
-        .liquidGlassBar()
-        .background(
-            LinearGradient(
-                colors: [
-                    Color.accentColor.opacity(0.06),
-                    Color(nsColor: .windowBackgroundColor),
-                    Color.accentColor.opacity(0.04)
-                ],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-        )
+        // 玻璃卡片背景由父视图（ContentView）统一施加
     }
 
     // MARK: 总应用数
@@ -211,6 +199,13 @@ struct StatsPanelView: View {
                             .monospacedDigit()
                     }
                 }
+            }
+            // 基准来源脚注：在线 / 缓存 / 内置，及各框架当前最新版
+            if let baseline = model.baseline, !baseline.summaryText.isEmpty {
+                Text("版本基准 · \(baseline.sourceText)：\(baseline.summaryText)")
+                    .font(.system(size: 9))
+                    .foregroundStyle(.tertiary)
+                    .lineLimit(2)
             }
         }
     }

@@ -11,8 +11,7 @@ struct TooMuchChromeApp: App {
                 .frame(minWidth: 1100, minHeight: 700)
         }
         .defaultSize(width: 1280, height: 800)
-        // 隐藏原生标题栏（避免与自定义工具栏标题重复），
-        // 红绿灯保留在左上角，由工具栏的 leading 留白让位——对齐原型布局
+        // 隐藏系统标题栏：标题/过滤器/重扫同处一条自定义工具栏，红绿灯由其左侧留白让位
         .windowStyle(.hiddenTitleBar)
         .commands {
             CommandMenu("扫描") {

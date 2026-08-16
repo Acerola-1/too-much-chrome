@@ -22,6 +22,8 @@ final class ScanViewModel {
     var filter: AppType?
     /// 排行行 ↔ 网格图标 联动高亮
     var linkedID: UUID?
+    /// 在线版本基准（新旧评估的动态锚点；nil = 尚未加载）
+    private(set) var baseline: VersionBaseline?
 
     private(set) var totalCandidates = 0
     private(set) var seenCandidates = 0
@@ -87,11 +89,34 @@ final class ScanViewModel {
         filteredApps.sorted { $0.totalBytes > $1.totalBytes }.prefix(5).map { $0 }
     }
 
+    /// 展示用健康状态：优先按在线基准动态分档；基准缺失时 Electron/CEF
+    /// 仍有内置锚可用，Tauri/Wails 无锚则显示 unknown。
+    /// 浏览器（Chromium 系）按应用主版本对 Chromium 基准分档
+    func displayStatus(for app: DetectedApp) -> VersionStatus {
+        switch app.type {
+        case .electron:
+            return VersionBands.electronStatus(app.version, latestMajor: baseline?.electronMajor)
+        case .cef, .browser:
+            return VersionBands.chromiumStatus(app.version, latestMajor: baseline?.chromiumMajor)
+        case .tauri:
+            return VersionBands.tauriStatus(app.version, latest: baseline?.tauriVersion)
+        case .wails:
+            return VersionBands.wailsStatus(app.version, latest: baseline?.wailsVersion)
+        case .nwjs:
+            return .unknown
+        }
+    }
+
     var healthCounts: [(status: VersionStatus, count: Int)] {
         VersionStatus.allCases.compactMap { status in
-            let n = filteredApps.filter { $0.status == status }.count
+            let n = filteredApps.filter { displayStatus(for: $0) == status }.count
             return n > 0 ? (status, n) : nil
         }
+    }
+
+    /// 拉取在线版本基准（缓存优先 24h TTL；失败退缓存/内置）
+    func refreshBaseline() async {
+        baseline = await VersionCatalog.refresh()
     }
 
     // MARK: 扫描

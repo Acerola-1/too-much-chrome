@@ -21,6 +21,12 @@ let package = Package(
             name: "tmc-scan",
             dependencies: ["TooMuchChromeCore"],
             path: "Sources/tmc-scan"
+        ),
+        // 核心逻辑单元测试（版本带判定等纯逻辑）
+        .testTarget(
+            name: "TooMuchChromeCoreTests",
+            dependencies: ["TooMuchChromeCore"],
+            path: "Tests/TooMuchChromeCoreTests"
         )
     ]
 )

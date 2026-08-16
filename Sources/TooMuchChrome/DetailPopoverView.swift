@@ -49,7 +49,7 @@ struct DetailPopoverView: View {
                         )
                     }
                     Badge(
-                        text: app.status.label,
+                        text: model.displayStatus(for: app).label,
                         foreground: app.status.color,
                         background: app.status.color.opacity(0.14)
                     )
