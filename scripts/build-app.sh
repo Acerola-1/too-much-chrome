@@ -26,7 +26,7 @@ DISPLAY_NAME="Too Much Chrome"
 BUNDLE_ID="${BUNDLE_ID:-com.acerola.too-much-chrome}"
 SIGN_IDENTITY="${SIGN_IDENTITY:-Developer ID Application: jiliang mo (VTQ6S5M4K3)}"
 TEAM_ID="${TEAM_ID:-VTQ6S5M4K3}"
-VERSION="${VERSION:-0.1.0}"
+VERSION="${VERSION:-0.1.1}"
 # CFBundleVersion：Sparkle 依赖其单调递增来判断新版本，默认取 git 提交数
 BUILD="${BUILD:-$(git rev-list --count HEAD 2>/dev/null || echo 1)}"
 NOTARY_PROFILE="${NOTARY_PROFILE:-tmc-notary}"
