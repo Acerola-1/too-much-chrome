@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Too Much Chrome — 看看你的 Mac 里藏了多少网页引擎应用</title>
+<meta name="description" content="Too Much Chrome 扫描 macOS 上所有基于 Chromium / WebView 的应用，统计存储占用与版本健康度。名字是个梗，扫描是认真的。">
+<link rel="icon" type="image/png" href="../images/icon-128.png" sizes="128x128">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+
+<nav class="nav" id="nav">
+  <div class="nav-inner">
+    <a class="nav-brand" href="#top">
+      <img src="../images/icon-128.png" alt="Too Much Chrome icon">
+      <span class="name">Too Much Chrome</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="#features">功能</a></li>
+      <li><a href="#tiers">检测分层</a></li>
+      <li><a class="nav-github" href="https://github.com/Acerola-1/too-much-chrome" target="_blank" rel="noopener">
+        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+        GitHub
+      </a></li>
+    </ul>
+    <div class="nav-lang">
+      <a href="../zh/" onclick="try{localStorage.setItem('tmc-lang','zh')}catch(e){}" style="color:var(--ink)">中文</a>
+      <a href="../en/" onclick="try{localStorage.setItem('tmc-lang','en')}catch(e){}">English</a>
+      <a href="../ja/" onclick="try{localStorage.setItem('tmc-lang','ja')}catch(e){}">日本語</a>
+    </div>
+  </div>
+</nav>
+
+<section class="hero" id="top">
+  <div class="section-inner">
+    <img class="hero-icon fade-in" src="../images/icon.png" alt="Too Much Chrome icon" width="132" height="132">
+    <h1 class="fade-in">Too Much Chrome</h1>
+    <p class="tagline fade-in">看看你的 Mac 里藏了多少网页引擎应用</p>
+    <p class="desc fade-in">Too Much Chrome 扫描 macOS 上所有基于 Chromium / WebView 的应用——Electron、CEF、NW.js、Tauri、Wails，以及 Chrome、Edge、Brave 这类完整浏览器——并统计它们占用的存储空间与版本健康度。</p>
+    <p class="punchline fade-in">名字是个梗，扫描是认真的。</p>
+    <div class="hero-actions fade-in">
+      <a class="btn btn-primary" href="https://github.com/Acerola-1/too-much-chrome/releases/latest" target="_blank" rel="noopener">下载最新版</a>
+      <a class="btn btn-secondary" href="https://github.com/Acerola-1/too-much-chrome" target="_blank" rel="noopener">查看源码</a>
+    </div>
+    <div class="badges fade-in">
+      <img alt="macOS 14+" src="https://img.shields.io/badge/macOS-14%2B-111827?style=flat-square&logo=apple">
+      <img alt="Apple Silicon" src="https://img.shields.io/badge/Apple%20Silicon-M%20series-2ECC71?style=flat-square&logo=apple">
+      <img alt="Swift" src="https://img.shields.io/badge/Swift-SwiftUI-F05138?style=flat-square&logo=swift&logoColor=white">
+      <img alt="License" src="https://img.shields.io/badge/license-AGPL--3.0-blue?style=flat-square">
+    </div>
+  </div>
+</section>
+
+<section class="screenshots" id="screenshots">
+  <div class="section-inner">
+    <h2 class="fade-in">界面预览<span class="sub">扫描结果，一览无遗</span></h2>
+    <div class="screenshot fade-in">
+      <img src="../images/app-hero-light.png" alt="Too Much Chrome 扫描结果主界面">
+    </div>
+  </div>
+</section>
+
+<section class="features" id="features">
+  <div class="section-inner">
+    <h2 class="fade-in">功能亮点<span class="sub">一次扫描，尽显全貌</span></h2>
+    <div class="feature-grid">
+      <div class="feature-card fade-in">
+        <div class="icon" style="background:rgba(0,113,227,.12);color:#0071e3"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.8-3.8"/></svg></div>
+        <h3>真实扫描</h3>
+        <p>/Applications 与用户目录中的每个应用，逐一查验。即便 Electron 应用更名改姓，Bundle ID 指纹亦能精准识别。</p>
+      </div>
+      <div class="feature-card fade-in">
+        <div class="icon" style="background:rgba(52,199,89,.14);color:#1a8f3c"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/><path d="M6 16h.01"/><path d="M10 16h.01"/></svg></div>
+        <h3>体积统计</h3>
+        <p>应用本体之外，~/Library 中深藏的缓存与数据同样计入。聚合、去重，真实占用一目了然。</p>
+      </div>
+      <div class="feature-card fade-in">
+        <div class="icon" style="background:rgba(255,159,10,.14);color:#b25000"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div>
+        <h3>版本健康度</h3>
+        <p>与各框架官方最新版本实时比对，绿至红五档评级，健康状态一目了然。无网络时，自动退回内置基准。</p>
+      </div>
+      <div class="feature-card fade-in">
+        <div class="icon" style="background:rgba(88,86,214,.12);color:#5856d6"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M15 3v18"/></svg></div>
+        <h3>总览与深究</h3>
+        <p>总数、占用、类型分布与排行，尽在一块面板。点选任一应用，即可深入查看存储构成与安装位置，或直接于 Finder 中打开。</p>
+      </div>
+      <div class="feature-card fade-in">
+        <div class="icon" style="background:rgba(0,113,227,.12);color:#0071e3"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"/><path d="M16 8 2 22"/><path d="M17.5 15H9"/></svg></div>
+        <h3>Swift 原生</h3>
+        <p>SwiftUI 原生打造。扫描于后台线程完成，阅毕即退，不留常驻进程。macOS 26 上，液态玻璃自动呈现。</p>
+      </div>
+      <div class="feature-card fade-in">
+        <div class="icon" style="background:rgba(52,199,89,.14);color:#1a8f3c"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg></div>
+        <h3>结果只留在你的 Mac</h3>
+        <p>无需登录，没有广告，更无任何收集。唯一的联网请求，是核对各框架的最新版本；扫描结果，从不离开你的 Mac。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="tiers" id="tiers">
+  <div class="section-inner">
+    <h2 class="fade-in">检测分层<span class="sub">不同框架的识别把握各不相同，每一档都如实标注</span></h2>
+    <div class="tiers-grid">
+      <div class="tier-card fade-in">
+        <span class="tier-tag" style="background:rgba(52,199,89,.14);color:#1a8f3c">Tier 1 · 高准确率</span>
+        <h3>Electron / CEF / NW.js</h3>
+        <p>以框架目录名与 Bundle ID 双指纹识别，几无误判。即便框架被更名（如 QQNT.framework），Bundle ID 中的 com.github.Electron 标识仍无所遁形。</p>
+      </div>
+      <div class="tier-card fade-in">
+        <span class="tier-tag" style="background:rgba(255,159,10,.14);color:#b25000">Tier 2 · 实验性</span>
+        <h3>Tauri / Wails</h3>
+        <p>两者均无明显的框架指纹，依托 Bundle ID、资源目录与二进制内的构建路径特征推断。经 garble 混淆的 Wails 应用无法识别，这一已知局限如实标注为实验性。</p>
+      </div>
+      <div class="tier-card fade-in">
+        <span class="tier-tag" style="background:rgba(142,142,147,.14);color:#6e6e73">Tier 3 · 仅列出</span>
+        <h3>完整浏览器</h3>
+        <p>Chrome、Edge、Brave 等浏览器直接列出，版本按 Chromium 基准评估；版本方案特殊者，由二进制内的 UA 字符串补全。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="star" id="star">
+  <div class="section-inner">
+    <h2 class="fade-in">Star History</h2>
+    <div class="fade-in">
+      <a href="https://star-history.com/#Acerola-1/too-much-chrome&Date">
+        <picture>
+          <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=Acerola-1/too-much-chrome&type=Date&theme=dark" />
+          <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=Acerola-1/too-much-chrome&type=Date" />
+          <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=Acerola-1/too-much-chrome&type=Date" width="720" style="max-width:100%" />
+        </picture>
+      </a>
+    </div>
+    <p class="fade-in">如果这个项目对你有帮助，欢迎点一个 ⭐ 支持持续维护。</p>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="section-inner">
+    <p>© 2026 Acerola · Too Much Chrome · 以 <a href="https://github.com/Acerola-1/too-much-chrome/blob/main/LICENSE" target="_blank" rel="noopener">AGPL-3.0</a> 开源（商用授权请联系作者）</p>
+    <div class="links">
+      <a href="https://github.com/Acerola-1/too-much-chrome" target="_blank" rel="noopener">GitHub</a>
+      <a href="https://github.com/Acerola-1/too-much-chrome/releases" target="_blank" rel="noopener">Releases</a>
+      <a href="https://github.com/Acerola-1/too-much-chrome/issues" target="_blank" rel="noopener">反馈</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  var nav=document.getElementById('nav');
+  window.addEventListener('scroll',function(){nav.classList.toggle('scrolled',window.scrollY>10);},{passive:true});
+  var io=new IntersectionObserver(function(entries){
+    entries.forEach(function(e){if(e.isIntersecting){e.target.classList.add('visible');io.unobserve(e.target);}});
+  },{threshold:0.12});
+  document.querySelectorAll('.fade-in').forEach(function(el){io.observe(el);});
+})();
+</script>
+</body>
+</html>

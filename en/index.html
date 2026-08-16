@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Too Much Chrome — See How Many Web-Engine Apps Are Hiding on Your Mac</title>
+<meta name="description" content="Too Much Chrome scans every Chromium / WebView app on your Mac, measuring storage footprint and version health. The name is a joke. The scan is serious.">
+<link rel="icon" type="image/png" href="../images/icon-128.png" sizes="128x128">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+
+<nav class="nav" id="nav">
+  <div class="nav-inner">
+    <a class="nav-brand" href="#top">
+      <img src="../images/icon-128.png" alt="Too Much Chrome icon">
+      <span class="name">Too Much Chrome</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="#features">Features</a></li>
+      <li><a href="#tiers">Detection</a></li>
+      <li><a class="nav-github" href="https://github.com/Acerola-1/too-much-chrome" target="_blank" rel="noopener">
+        <svg viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+        GitHub
+      </a></li>
+    </ul>
+    <div class="nav-lang">
+      <a href="../zh/" onclick="try{localStorage.setItem('tmc-lang','zh')}catch(e){}">中文</a>
+      <a href="../en/" onclick="try{localStorage.setItem('tmc-lang','en')}catch(e){}" style="color:var(--ink)">English</a>
+      <a href="../ja/" onclick="try{localStorage.setItem('tmc-lang','ja')}catch(e){}">日本語</a>
+    </div>
+  </div>
+</nav>
+
+<section class="hero" id="top">
+  <div class="section-inner">
+    <img class="hero-icon fade-in" src="../images/icon.png" alt="Too Much Chrome icon" width="132" height="132">
+    <h1 class="fade-in">Too Much Chrome</h1>
+    <p class="tagline fade-in">See how many web-engine apps are hiding on your Mac.</p>
+    <p class="desc fade-in">Too Much Chrome scans every Chromium / WebView app on your macOS — Electron, CEF, NW.js, Tauri, Wails, and full browsers like Chrome, Edge, and Brave — then measures how much storage they take and how current their engines are.</p>
+    <p class="punchline fade-in">The name is a meme. The scan is dead serious.</p>
+    <div class="hero-actions fade-in">
+      <a class="btn btn-primary" href="https://github.com/Acerola-1/too-much-chrome/releases/latest" target="_blank" rel="noopener">Download Latest</a>
+      <a class="btn btn-secondary" href="https://github.com/Acerola-1/too-much-chrome" target="_blank" rel="noopener">View Source</a>
+    </div>
+    <div class="badges fade-in">
+      <img alt="macOS 14+" src="https://img.shields.io/badge/macOS-14%2B-111827?style=flat-square&logo=apple">
+      <img alt="Apple Silicon" src="https://img.shields.io/badge/Apple%20Silicon-M%20series-2ECC71?style=flat-square&logo=apple">
+      <img alt="Swift" src="https://img.shields.io/badge/Swift-SwiftUI-F05138?style=flat-square&logo=swift&logoColor=white">
+      <img alt="License" src="https://img.shields.io/badge/license-AGPL--3.0-blue?style=flat-square">
+    </div>
+  </div>
+</section>
+
+<section class="screenshots" id="screenshots">
+  <div class="section-inner">
+    <h2 class="fade-in">Screenshots<span class="sub">Scan results, at a glance</span></h2>
+    <div class="screenshot fade-in">
+      <img src="../images/app-hero-light.png" alt="Too Much Chrome main scan view">
+    </div>
+  </div>
+</section>
+
+<section class="features" id="features">
+  <div class="section-inner">
+    <h2 class="fade-in">Highlights<span class="sub">One scan. The full picture.</span></h2>
+    <div class="feature-grid">
+      <div class="feature-card fade-in">
+        <div class="icon" style="background:rgba(0,113,227,.12);color:#0071e3"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.8-3.8"/></svg></div>
+        <h3>Real Scanning</h3>
+        <p>Every app in /Applications and your user folder, examined one by one. Even a renamed Electron build is recognized precisely — by its Bundle ID fingerprint.</p>
+      </div>
+      <div class="feature-card fade-in">
+        <div class="icon" style="background:rgba(52,199,89,.14);color:#1a8f3c"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/><path d="M6 16h.01"/><path d="M10 16h.01"/></svg></div>
+        <h3>Storage Statistics</h3>
+        <p>Beyond the app itself, caches and data tucked away in ~/Library are counted too. Aggregated, deduplicated, and perfectly clear.</p>
+      </div>
+      <div class="feature-card fade-in">
+        <div class="icon" style="background:rgba(255,159,10,.14);color:#b25000"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div>
+        <h3>Version Health</h3>
+        <p>Compared in real time against the latest official releases of each framework, rated in five tiers from green to red. Without a network, it falls back to built-in baselines.</p>
+      </div>
+      <div class="feature-card fade-in">
+        <div class="icon" style="background:rgba(88,86,214,.12);color:#5856d6"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M15 3v18"/></svg></div>
+        <h3>Overview &amp; Drill-down</h3>
+        <p>Totals, footprint, distribution, and rankings — all in a single panel. Select any app to explore its storage breakdown and install path, or reveal it in Finder.</p>
+      </div>
+      <div class="feature-card fade-in">
+        <div class="icon" style="background:rgba(0,113,227,.12);color:#0071e3"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"/><path d="M16 8 2 22"/><path d="M17.5 15H9"/></svg></div>
+        <h3>Swift Native</h3>
+        <p>Crafted in SwiftUI. The scan runs on a background thread and exits when done — no resident process. On macOS 26, Liquid Glass arrives automatically.</p>
+      </div>
+      <div class="feature-card fade-in">
+        <div class="icon" style="background:rgba(52,199,89,.14);color:#1a8f3c"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg></div>
+        <h3>Results Stay on Your Mac</h3>
+        <p>No sign-in. No ads. No collection of any kind. The only online requests check for the latest framework versions — your scan results never leave your Mac.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="tiers" id="tiers">
+  <div class="section-inner">
+    <h2 class="fade-in">Detection Tiers<span class="sub">Identification confidence varies by framework — and every tier is labeled as it is</span></h2>
+    <div class="tiers-grid">
+      <div class="tier-card fade-in">
+        <span class="tier-tag" style="background:rgba(52,199,89,.14);color:#1a8f3c">Tier 1 · High accuracy</span>
+        <h3>Electron / CEF / NW.js</h3>
+        <p>Identified by a dual fingerprint of framework directory name and Bundle ID, with virtually no misjudgments. Even a renamed framework (e.g. QQNT.framework) cannot hide the com.github.Electron identifier in its Bundle ID.</p>
+      </div>
+      <div class="tier-card fade-in">
+        <span class="tier-tag" style="background:rgba(255,159,10,.14);color:#b25000">Tier 2 · Experimental</span>
+        <h3>Tauri / Wails</h3>
+        <p>Neither leaves an obvious framework fingerprint, so they are inferred from Bundle IDs, resource directories, and build-path signatures inside the binary. Wails builds obfuscated with garble remain undetectable — a known limitation, honestly labeled as experimental.</p>
+      </div>
+      <div class="tier-card fade-in">
+        <span class="tier-tag" style="background:rgba(142,142,147,.14);color:#6e6e73">Tier 3 · Listed only</span>
+        <h3>Full Browsers</h3>
+        <p>Browsers such as Chrome, Edge, and Brave are listed as-is, with versions rated against the Chromium baseline. Divergent version schemes are resolved through the UA string embedded in the binary.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="star" id="star">
+  <div class="section-inner">
+    <h2 class="fade-in">Star History</h2>
+    <div class="fade-in">
+      <a href="https://star-history.com/#Acerola-1/too-much-chrome&Date">
+        <picture>
+          <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=Acerola-1/too-much-chrome&type=Date&theme=dark" />
+          <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=Acerola-1/too-much-chrome&type=Date" />
+          <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=Acerola-1/too-much-chrome&type=Date" width="720" style="max-width:100%" />
+        </picture>
+      </a>
+    </div>
+    <p class="fade-in">If this project helps you, a ⭐ would mean a lot for continued maintenance.</p>
+  </div>
+</section>
+
+<footer class="footer">
+  <div class="section-inner">
+    <p>© 2026 Acerola · Too Much Chrome · Open-sourced under <a href="https://github.com/Acerola-1/too-much-chrome/blob/main/LICENSE" target="_blank" rel="noopener">AGPL-3.0</a> (contact the author for commercial licensing)</p>
+    <div class="links">
+      <a href="https://github.com/Acerola-1/too-much-chrome" target="_blank" rel="noopener">GitHub</a>
+      <a href="https://github.com/Acerola-1/too-much-chrome/releases" target="_blank" rel="noopener">Releases</a>
+      <a href="https://github.com/Acerola-1/too-much-chrome/issues" target="_blank" rel="noopener">Feedback</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  var nav=document.getElementById('nav');
+  window.addEventListener('scroll',function(){nav.classList.toggle('scrolled',window.scrollY>10);},{passive:true});
+  var io=new IntersectionObserver(function(entries){
+    entries.forEach(function(e){if(e.isIntersecting){e.target.classList.add('visible');io.unobserve(e.target);}});
+  },{threshold:0.12});
+  document.querySelectorAll('.fade-in').forEach(function(el){io.observe(el);});
+})();
+</script>
+</body>
+</html>
