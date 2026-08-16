@@ -328,6 +328,228 @@ func conceptD() -> CGContext {
     return ctx
 }
 
+// MARK: - 概念 E：放大镜 + 品牌图标（检视一堆真实世界应用）
+// 镜外散布风格化品牌贴片（降透明 = 下层桌面），镜内 Chrome 三色圆为主角，
+// Electron / Tauri 露边，扫描线横过——"在一堆应用里揪出那个 Chrome"。
+// 注：均为程序化风格化近似，非官方资源。
+
+/// 品牌贴片：统一圆角方底 + 标志性图形
+enum Brand { case chrome, electron, tauri, vscode, slack, generic(UInt32) }
+
+func brandTile(_ ctx: CGContext, _ x: CGFloat, _ y: CGFloat, _ s: CGFloat, _ kind: Brand) {
+    // 白底圆角贴片（generic 为品牌色底）
+    let rect = CGRect(x: x, y: y, width: s, height: s)
+    let path = CGPath(roundedRect: rect, cornerWidth: s * 0.22, cornerHeight: s * 0.22, transform: nil)
+    ctx.saveGState()
+    ctx.setShadow(offset: CGSize(width: 0, height: -8), blur: 18, color: color(0x000000, 0.30))
+    ctx.addPath(path)
+    ctx.clip()
+    let bg: UInt32
+    if case .generic(let c) = kind { bg = c } else { bg = 0xf4f6f9 }
+    ctx.drawLinearGradient(
+        gradient([0xffffff, bg]),
+        start: CGPoint(x: x, y: y + s), end: CGPoint(x: x, y: y), options: []
+    )
+    let cx = x + s / 2, cy = y + s / 2
+
+    switch kind {
+    case .chrome:
+        // 三色扇区（红上/黄左下/绿右下，留白隙）+ 中心白环蓝圆
+        let R = s * 0.36
+        let segs: [(UInt32, CGFloat, CGFloat)] = [
+            (0xEA4335, 30, 150),   // 红：上半
+            (0xFBBC05, 150, 270),  // 黄：左下
+            (0x34A853, 270, 390)   // 绿：右下
+        ]
+        for (hex, a0, a1) in segs {
+            let p = CGMutablePath()
+            p.move(to: CGPoint(x: cx, y: cy))
+            p.addArc(center: CGPoint(x: cx, y: cy), radius: R,
+                     startAngle: (a0 + 2) * .pi / 180, endAngle: (a1 - 2) * .pi / 180, clockwise: false)
+            p.closeSubpath()
+            ctx.addPath(p)
+            ctx.setFillColor(color(hex))
+            ctx.fillPath()
+        }
+        ctx.setFillColor(color(0xf4f6f9))
+        ctx.fillEllipse(in: CGRect(x: cx - R * 0.62, y: cy - R * 0.62, width: R * 1.24, height: R * 1.24))
+        ctx.setFillColor(color(0x4285F4))
+        ctx.fillEllipse(in: CGRect(x: cx - R * 0.54, y: cy - R * 0.54, width: R * 1.08, height: R * 1.08))
+
+    case .electron:
+        // 三条倾斜轨道 + 中心圆点（Electron 原子，青灰官方色）
+        ctx.setStrokeColor(color(0x9FB6BD, 0.95))
+        ctx.setLineWidth(s * 0.045)
+        for i in 0..<3 {
+            ctx.saveGState()
+            ctx.translateBy(x: cx, y: cy)
+            ctx.rotate(by: CGFloat(i) * .pi / 3)
+            ctx.strokeEllipse(in: CGRect(x: -s * 0.36, y: -s * 0.13, width: s * 0.72, height: s * 0.26))
+            let theta = CGFloat(i) * 2.1 + 0.8
+            let ex = s * 0.36 * cos(theta) * 0.9
+            let ey = s * 0.13 * sin(theta)
+            ctx.setFillColor(color(0x47848F))
+            ctx.fillEllipse(in: CGRect(x: ex - s * 0.045, y: ey - s * 0.045, width: s * 0.09, height: s * 0.09))
+            ctx.restoreGState()
+        }
+        ctx.setFillColor(color(0x9FB6BD))
+        ctx.fillEllipse(in: CGRect(x: cx - s * 0.07, y: cy - s * 0.07, width: s * 0.14, height: s * 0.14))
+
+    case .tauri:
+        // 黄→青渐变圆环 + 偏心内点（Tauri 双色语言）
+        let R = s * 0.30
+        ctx.saveGState()
+        ctx.addEllipse(in: CGRect(x: cx - R, y: cy - R, width: R * 2, height: R * 2))
+        ctx.clip()
+        ctx.drawLinearGradient(
+            gradient([0xFFC131, 0x24C8D8]),
+            start: CGPoint(x: cx - R, y: cy + R), end: CGPoint(x: cx + R, y: cy - R), options: []
+        )
+        ctx.restoreGState()
+        ctx.setFillColor(color(0xf4f6f9))
+        ctx.fillEllipse(in: CGRect(x: cx - R * 0.62, y: cy - R * 0.62, width: R * 1.24, height: R * 1.24))
+        ctx.setFillColor(color(0x24C8D8))
+        ctx.fillEllipse(in: CGRect(x: cx - R * 0.30, y: cy + R * 0.02, width: R * 0.60, height: R * 0.60))
+
+    case .vscode:
+        // 蓝底 + 白色双角括号（VS Code 的 <> 语言）
+        ctx.setFillColor(color(0x007ACC))
+        ctx.fill(rect)
+        ctx.setStrokeColor(color(0xffffff))
+        ctx.setLineWidth(s * 0.075)
+        ctx.setLineCap(.round)
+        ctx.setLineJoin(.round)
+        let m = s * 0.22
+        ctx.move(to: CGPoint(x: cx - m * 0.35, y: cy))
+        ctx.addLine(to: CGPoint(x: cx - m, y: cy - m * 0.8))
+        ctx.strokePath()
+        ctx.move(to: CGPoint(x: cx - m * 0.35, y: cy))
+        ctx.addLine(to: CGPoint(x: cx - m, y: cy + m * 0.8))
+        ctx.strokePath()
+        ctx.move(to: CGPoint(x: cx + m * 0.35, y: cy))
+        ctx.addLine(to: CGPoint(x: cx + m, y: cy - m * 0.8))
+        ctx.strokePath()
+        ctx.move(to: CGPoint(x: cx + m * 0.35, y: cy))
+        ctx.addLine(to: CGPoint(x: cx + m, y: cy + m * 0.8))
+        ctx.strokePath()
+
+    case .slack:
+        // 四色井字（Slack）
+        let b = s * 0.11, L = s * 0.26, off = s * 0.14
+        let groups: [(UInt32, CGFloat)] = [
+            (0x36C5F0, 0), (0x2EB67D, 90), (0xECB22E, 180), (0xE01E5A, 270)
+        ]
+        for (hex, deg) in groups {
+            ctx.saveGState()
+            ctx.translateBy(x: cx, y: cy)
+            ctx.rotate(by: deg * .pi / 180)
+            let vbar = CGRect(x: off - b / 2, y: -b / 2, width: b, height: L)
+            let hbar = CGRect(x: -b / 2, y: off - b / 2 + b, width: L, height: b)
+            ctx.setFillColor(color(hex))
+            ctx.addPath(CGPath(roundedRect: vbar, cornerWidth: b / 2, cornerHeight: b / 2, transform: nil))
+            ctx.fillPath()
+            ctx.setFillColor(color(hex, 0.88))
+            ctx.addPath(CGPath(roundedRect: hbar, cornerWidth: b / 2, cornerHeight: b / 2, transform: nil))
+            ctx.fillPath()
+            ctx.restoreGState()
+        }
+
+    case .generic(let hex):
+        // 品牌色底 + 白色圆点（凑数的"其他应用"）
+        ctx.setFillColor(color(hex))
+        ctx.fill(rect)
+        ctx.setFillColor(color(0xffffff, 0.9))
+        ctx.fillEllipse(in: CGRect(x: cx - s * 0.14, y: cy - s * 0.14, width: s * 0.28, height: s * 0.28))
+    }
+    ctx.restoreGState()
+}
+
+func conceptE() -> CGContext {
+    let ctx = makeContext(S)
+    drawBase(ctx, 0xbef3ef, 0x3aa8e8, glow: 0xe8fdff)
+
+    let cx: CGFloat = 452, cy: CGFloat = 578, r: CGFloat = 264
+
+    // 镜外：散布的品牌贴片（画完后统一罩暗 = 下层桌面感）
+    let outer: [(CGFloat, CGFloat, CGFloat, Brand)] = [
+        (96, 90, 168, .generic(0x34C759)),
+        (318, 60, 150, .slack),
+        (620, 96, 160, .vscode),
+        (840, 300, 150, .generic(0xFF9500)),
+        (60, 420, 150, .tauri),
+        (760, 560, 158, .electron)
+    ]
+    for (x, y, s, kind) in outer {
+        brandTile(ctx, x, y, s, kind)
+    }
+    ctx.saveGState()
+    ctx.addPath(squircle(S / 2, S / 2, S * 0.402))
+    ctx.clip()
+    ctx.setFillColor(color(0xd6f4fb, 0.38))
+    ctx.fill(CGRect(x: 0, y: 0, width: S, height: S))
+    ctx.restoreGState()
+
+    // 镜内：清晰的品牌图标（裁剪到镜圆）
+    ctx.saveGState()
+    ctx.translateBy(x: cx, y: cy)
+    ctx.addEllipse(in: CGRect(x: -r + 16, y: -r + 16, width: (r - 16) * 2, height: (r - 16) * 2))
+    ctx.clip()
+    // Chrome 主角（占镜面约 2/3，聚焦冲击力）
+    brandTile(ctx, -206, -92, 336, .chrome)
+    // Electron 右下露半个（克制的配角）
+    brandTile(ctx, 120, -226, 150, .electron)
+    // Tauri 左上露角
+    brandTile(ctx, -210, 140, 132, .tauri)
+    // 扫描线横过主角
+    ctx.setStrokeColor(color(0x0a63e8, 0.8))
+    ctx.setLineWidth(12)
+    ctx.move(to: CGPoint(x: -r, y: 44))
+    ctx.addLine(to: CGPoint(x: r, y: 44))
+    ctx.strokePath()
+    for (w, a) in [(30.0, 0.12), (5.0, 0.5)] {
+        ctx.setStrokeColor(color(0x9fe0ff, a))
+        ctx.setLineWidth(w)
+        ctx.move(to: CGPoint(x: -r, y: 44))
+        ctx.addLine(to: CGPoint(x: r, y: 44))
+        ctx.strokePath()
+    }
+    ctx.restoreGState()
+
+    // 玻璃 + 高光弧 + 银框 + 手柄（沿用概念 D 的修复版）
+    ctx.setFillColor(color(0xffffff, 0.10))
+    ctx.fillEllipse(in: CGRect(x: cx - r, y: cy - r, width: r * 2, height: r * 2))
+    ctx.setStrokeColor(color(0xffffff, 0.85))
+    ctx.setLineWidth(20)
+    ctx.setLineCap(.round)
+    ctx.addArc(center: CGPoint(x: cx, y: cy), radius: r - 58, startAngle: .pi * 0.62, endAngle: .pi * 0.88, clockwise: false)
+    ctx.strokePath()
+
+    let ring: CGFloat = 42
+    ctx.addEllipse(in: CGRect(x: cx - r - ring / 2, y: cy - r - ring / 2, width: (r + ring / 2) * 2, height: (r + ring / 2) * 2))
+    ctx.addEllipse(in: CGRect(x: cx - r + ring / 2, y: cy - r + ring / 2, width: (r - ring / 2) * 2, height: (r - ring / 2) * 2))
+    ctx.saveGState()
+    ctx.clip(using: .evenOdd)
+    ctx.drawLinearGradient(
+        gradient([0xf5f7fa, 0x9aa7b8, 0xdfe6ee]),
+        start: CGPoint(x: cx - r, y: cy + r), end: CGPoint(x: cx + r, y: cy - r), options: []
+    )
+    ctx.restoreGState()
+
+    ctx.saveGState()
+    ctx.translateBy(x: cx, y: cy)
+    ctx.rotate(by: -.pi / 4)
+    let handle = CGRect(x: r - 12, y: -29, width: 252, height: 58)
+    ctx.setShadow(offset: CGSize(width: 0, height: -8), blur: 24, color: color(0x000000, 0.25))
+    ctx.addPath(CGPath(roundedRect: handle, cornerWidth: 29, cornerHeight: 29, transform: nil))
+    ctx.clip()
+    ctx.drawLinearGradient(
+        gradient([0xe9eef4, 0x8e9bab, 0xcfd8e2]),
+        start: CGPoint(x: 0, y: 29), end: CGPoint(x: 0, y: -29), options: []
+    )
+    ctx.restoreGState()
+    return ctx
+}
+
 // MARK: - 导出（母版 + iconset + 拼图）
 
 let iconsetSizes: [(CGFloat, String)] = [
@@ -353,7 +575,8 @@ let concepts: [(String, () -> CGContext)] = [
     ("A-scanline", conceptA),
     ("B-atom", conceptB),
     ("C-pile", conceptC),
-    ("D-lens", conceptD)
+    ("D-lens", conceptD),
+    ("E-brand-lens", conceptE)
 ]
 
 var masters: [(String, CGImage)] = []
@@ -366,16 +589,18 @@ for (name, draw) in concepts {
     print("✓ \(name)")
 }
 
-// 拼图：2×2 对比总览
-let sheetSize: CGFloat = 2088
+// 拼图：2 列 × 自适应行数对比总览
+let count = masters.count
+let rows = Int(ceil(Double(count) / 2))
+let sheetSize: CGFloat = 24 * (CGFloat(rows) + 1) + CGFloat(rows) * 1024
 let sheet = makeContext(sheetSize)
 sheet.setFillColor(color(0x111114))
 sheet.fill(CGRect(x: 0, y: 0, width: sheetSize, height: sheetSize))
-let cell = (sheetSize - 24 * 3) / 2
 for (i, (_, img)) in masters.enumerated() {
     let col = CGFloat(i % 2), row = CGFloat(i / 2)
+    let cell = 1024.0
     let x = 24 + col * (cell + 24)
-    let y = 24 + (1 - row) * (cell + 24)   // CG 坐标 y 向上
+    let y = 24 + (CGFloat(rows) - 1 - row) * (cell + 24)   // CG 坐标 y 向上
     sheet.interpolationQuality = .high
     sheet.draw(img, in: CGRect(x: x, y: y, width: cell, height: cell))
 }

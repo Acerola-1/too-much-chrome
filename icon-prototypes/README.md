@@ -1,4 +1,4 @@
-# 图标原型（4 概念）
+# 图标原型（5 概念）
 
 CoreGraphics 程序化绘制，符合 macOS 图标规范：超级椭圆（squircle, n≈4.8）、
 824/1024 内容幅面、透明圆角、无文字、小尺寸可辨。每个概念含
@@ -11,8 +11,13 @@ CoreGraphics 程序化绘制，符合 macOS 图标规范：超级椭圆（squirc
 | `B-atom/` | Chromium 原子 | 原子核 + 三条电子轨道（Electron 本源） |
 | `C-pile/` | 堆积超载 | 彩色应用芯片堆山外溢（"too much" 直译） |
 | `D-lens/` | 放大镜检视 | 镜下小网格 + 扫描线（温和的扫描工具感） |
+| `E-brand-lens/` | 放大镜 + 品牌图标 | 镜外散布品牌贴片，镜内 Chrome 三色圆为主角、Electron/Tauri 露边，扫描线横过——"在一堆应用里揪出那个 Chrome" |
 
-`overview.png` 为四概念 2×2 对比总览。
+`overview.png` 为全概念对比总览。
+
+> **E 的品牌图形说明**：Chrome 三色圆 / Electron 轨道原子 / Tauri 渐变环 /
+> VS Code 角括号 / Slack 四色井字均为程序化**风格化近似**（非官方资源文件），
+> 个人项目使用无碍；若对外分发/商用，建议复核各商标方针对 logo 使用的具体政策。
 
 ## 用法
 
