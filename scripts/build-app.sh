@@ -180,13 +180,19 @@ fi
 # ---- DMG ----
 if [[ "$MODE" == "dmg" ]]; then
   DMG=".build/${APP_NAME}-${VERSION}.dmg"
-  echo "==> 生成 DMG（${DMG}）"
+  echo "==> 生成安装式 DMG（${DMG}）"
   rm -f "$DMG"
-  hdiutil create -volname "$DISPLAY_NAME" -srcfolder "$APP" -ov -format UDZO "$DMG" >/dev/null
+  DMG_ROOT=".build/dmg-root"
+  rm -rf "$DMG_ROOT"
+  mkdir -p "$DMG_ROOT"
+  cp -R "$APP" "$DMG_ROOT/"
+  # 标准安装布局：应用 + Applications 文件夹链接，打开即"拖入安装"
+  ln -s /Applications "$DMG_ROOT/Applications"
+  hdiutil create -volname "$DISPLAY_NAME" -srcfolder "$DMG_ROOT" -ov -format UDZO "$DMG" >/dev/null
   if [[ "$SKIP_NOTARY" -eq 0 ]]; then
     codesign --sign "$SIGN_IDENTITY" --timestamp "$DMG"
     xcrun notarytool submit "$DMG" "${NOTARY_ARGS[@]}" --wait
     xcrun stapler staple "$DMG"
   fi
-  echo "✓ 分发物就绪：$DMG"
+  echo "✓ 分发物就绪：${DMG}"
 fi

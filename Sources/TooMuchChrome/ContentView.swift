@@ -7,6 +7,7 @@ import TooMuchChromeCore
 struct ContentView: View {
     @Environment(ScanViewModel.self) private var model
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var showInstallHint = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -48,6 +49,17 @@ struct ContentView: View {
         // 在线版本基准与扫描并行加载，到达后各应用状态点动态重判
         .task {
             await model.refreshBaseline()
+        }
+        // 从 DMG 挂载卷直接运行时引导安装（只读卷上无法完成自更新）
+        .task {
+            if Bundle.main.bundleURL.path.hasPrefix("/Volumes/") {
+                showInstallHint = true
+            }
+        }
+        .alert("请先将应用安装到 Applications", isPresented: $showInstallHint) {
+            Button("好") {}
+        } message: {
+            Text("你正在从安装镜像中直接运行 Too Much Chrome。请把它拖入 Applications 文件夹并从那里启动，自动更新才能正常工作。")
         }
     }
 
