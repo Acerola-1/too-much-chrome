@@ -28,6 +28,7 @@ jobs:
       #   NOTARY_APPLE_ID           — Apple ID 邮箱
       #   NOTARY_PASSWORD           — App 专用密码
       #   TEAM_ID                   — 开发者团队号
+      #   SPARKLE_PRIVATE_KEY       — Sparkle EdDSA 私钥内容（generate_keys --account too-much-chrome 导出）
       - name: 导入 Developer ID 证书
         if: ${{ secrets.DEVELOPER_ID_P12 != '' }}
         env:
@@ -40,6 +41,10 @@ jobs:
           security default-keychain -s ci.keychain
           security unlock-keychain -p ci ci.keychain
           security import "$cert" -k ci.keychain -P "$P12_PASSWORD" -T /usr/bin/codesign
+          # p12 只含叶证书；codesign 需要完整链，中间 CA 从 Apple 官方下载补齐
+          curl -fsSL -o "$RUNNER_TEMP/DeveloperIDCA.cer" \
+            https://www.apple.com/certificateauthority/DeveloperIDCA.cer
+          security import "$RUNNER_TEMP/DeveloperIDCA.cer" -k ci.keychain
           security set-key-partition-list -S apple-tool:,apple: -k ci ci.keychain
           echo "SIGN_IDENTITY=${{ secrets.SIGN_IDENTITY }}" >> "$GITHUB_ENV"
           echo "APPLE_ID=${{ secrets.NOTARY_APPLE_ID }}" >> "$GITHUB_ENV"
@@ -48,6 +53,48 @@ jobs:
 
       - name: 构建、签名、公证并打包 DMG
         run: ./scripts/build-app.sh dmg
+
+      - name: 打包 Sparkle 更新 ZIP
+        run: |
+          # Sparkle 自更新使用 ZIP（比 DMG 更稳：直接解压替换 .app）。
+          # 复用已公证并 staple 过的 .app（内含已重签的 Sparkle.framework）。
+          mkdir -p build/appcast
+          ditto -c -k --keepParent ".build/TooMuchChrome.app" \
+            "build/appcast/TooMuchChrome-${GITHUB_REF_NAME}.zip"
+
+      - name: 生成 appcast
+        env:
+          SPARKLE_PRIVATE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
+        run: |
+          SPARKLE_BIN=".build/artifacts/sparkle/Sparkle/bin"
+          if [ ! -x "$SPARKLE_BIN/generate_appcast" ]; then
+            echo "::error::找不到 Sparkle 工具（$SPARKLE_BIN/generate_appcast）"
+            exit 1
+          fi
+          # 发布说明转 HTML 供 Sparkle 内嵌（generate_appcast 以同名 .html 关联更新日志）
+          if [ -f RELEASE_NOTES.md ]; then
+            HTML_FILE="build/appcast/TooMuchChrome-${GITHUB_REF_NAME}.html"
+            if command -v pandoc &>/dev/null; then
+              pandoc -f markdown -t html --standalone RELEASE_NOTES.md -o "$HTML_FILE" || true
+              sed -i '' 's|<head>|<head><style>body{font-family:-apple-system,sans-serif;font-size:13px;line-height:1.5;padding:8px;color:#333}h2{font-size:15px;margin:0 0 8px}h3{font-size:13px;margin:8px 0 4px}ul{margin:2px 0;padding-left:20px}li{margin:2px 0}</style>|' "$HTML_FILE" || true
+            else
+              {
+                printf '%s\n' '<!DOCTYPE html><html><head><meta charset="utf-8"><style>body{font-family:-apple-system,sans-serif;font-size:13px;line-height:1.5;padding:8px;}pre{white-space:pre-wrap;}</style></head><body><pre>'
+                cat RELEASE_NOTES.md
+                printf '%s\n' '</pre></body></html>'
+              } > "$HTML_FILE"
+            fi
+          fi
+          echo "$SPARKLE_PRIVATE_KEY" > "$RUNNER_TEMP/sparkle_ed_private_key"
+          DL_PREFIX="https://github.com/${GITHUB_REPOSITORY}/releases/download/${GITHUB_REF_NAME}"
+          "$SPARKLE_BIN/generate_appcast" \
+            --ed-key-file "$RUNNER_TEMP/sparkle_ed_private_key" \
+            --download-url-prefix "$DL_PREFIX/" \
+            --embed-release-notes \
+            build/appcast
+          rm -f "$RUNNER_TEMP/sparkle_ed_private_key"
+          echo "--- appcast.xml ---"
+          cat build/appcast/appcast.xml
 
       - name: 发布 Release
         env:
@@ -60,7 +107,8 @@ jobs:
             ARGS+=(--notes-file RELEASE_NOTES.md)
           fi
           gh release create "$TAG" "${ARGS[@]}" \
-            ".build/TooMuchChrome-${VERSION}.dmg"
+            ".build/TooMuchChrome-${VERSION}.dmg" \
+            "build/appcast/TooMuchChrome-${TAG}.zip"
 
       - name: 部署官网到 GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
@@ -69,3 +117,13 @@ jobs:
           publish_dir: docs
           publish_branch: gh-pages
           keep_files: true
+
+      - name: 部署 appcast 到 GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: build/appcast
+          publish_branch: gh-pages
+          keep_files: true
+          # 仅保留 appcast.xml；zip/html/md 作为 Release 资产，不进官网根目录
+          exclude_assets: '*.zip,*.md,TooMuchChrome-*.html'

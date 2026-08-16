@@ -43,7 +43,7 @@ sums up the total count, storage split, a type-distribution donut chart, a top-5
 version health.
 
 <p align="center">
-  <img src="docs/images/app-hero.png" width="720" alt="Too Much Chrome main scan view">
+  <img src="docs/images/app-hero-light.png" width="720" alt="Too Much Chrome main scan view">
 </p>
 
 ## Highlights
@@ -98,7 +98,7 @@ The app is notarized by Apple and opens directly after download.
 ## Requirements
 
 - macOS 14 or later (Liquid Glass on macOS 26+)
-- Apple Silicon (M-series chips)
+- Apple Silicon (M-series chips, arm64 only — no Intel build)
 
 ## Build
 
@@ -156,5 +156,5 @@ Copyright © 2026 Acerola. All rights reserved.
 
 ### Third-Party Components
 
-This project has no third-party dependencies — it uses only system frameworks (SwiftUI /
-AppKit / Foundation).
+The only third-party dependency is **Sparkle** (auto-update framework) — MIT-style
+license; everything else uses system frameworks (SwiftUI / AppKit / Foundation).

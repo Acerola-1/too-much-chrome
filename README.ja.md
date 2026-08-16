@@ -43,7 +43,7 @@
 バージョン健康度が一目で収まります。
 
 <p align="center">
-  <img src="docs/images/app-hero.png" width="720" alt="Too Much Chrome スキャン結果のメイン画面">
+  <img src="docs/images/app-hero-light.png" width="720" alt="Too Much Chrome スキャン結果のメイン画面">
 </p>
 
 ## 機能ハイライト
@@ -99,7 +99,7 @@ Swift / SwiftUI で開発。macOS 26 では Liquid Glass が自動で有効に�
 ## システム要件
 
 - macOS 14 以降（macOS 26+ では Liquid Glass が有効）
-- Apple Silicon（M シリーズチップ）
+- Apple Silicon（M シリーズチップ、arm64 のみ対応。Intel 版は提供しません）
 
 ## ビルド
 
@@ -156,5 +156,6 @@ Copyright © 2026 Acerola. All rights reserved.
 
 ### サードパーティコンポーネント
 
-本プロジェクトにサードパーティ依存はありません。システムフレームワーク
+本プロジェクトの唯一のサードパーティ依存は **Sparkle**（自動更新フレームワーク）です
+—— MIT 系ライセンス。その他はすべてシステムフレームワーク
 （SwiftUI / AppKit / Foundation）のみを使用しています。

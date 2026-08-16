@@ -40,7 +40,7 @@
 浮动玻璃工具栏与右侧报告面板同处一条主线：左侧网格按发现顺序逐个显现应用，扫描线光条即真实扫描进度；右侧一屏汇总总数、存储占用、类型分布环形图、Top 5 排行与版本健康度。
 
 <p align="center">
-  <img src="docs/images/app-hero.png" width="720" alt="Too Much Chrome 扫描结果主界面">
+  <img src="docs/images/app-hero-light.png" width="720" alt="Too Much Chrome 扫描结果主界面">
 </p>
 
 ## 功能亮点
@@ -88,7 +88,7 @@ Swift / SwiftUI 原生开发，macOS 26+ 自动启用液态玻璃（低版本回
 ## 系统要求
 
 - macOS 14 及以上（macOS 26+ 自动启用液态玻璃）
-- Apple Silicon（M 系列芯片）
+- Apple Silicon（M 系列芯片，仅支持 arm64，不提供 Intel 版）
 
 ## 构建
 
@@ -144,4 +144,5 @@ GitHub Actions 自动构建、签名、公证并发布 Release（详见 `.github
 
 ### 第三方组件
 
-本项目无第三方依赖，全部使用系统框架（SwiftUI / AppKit / Foundation）。
+本项目唯一的第三方依赖是 **Sparkle**（自更新框架）—— MIT 类许可；
+其余全部使用系统框架（SwiftUI / AppKit / Foundation）。
