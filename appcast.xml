@@ -3,10 +3,10 @@
     <channel>
         <title>TooMuchChrome</title>
         <item>
-            <title>0.1.1</title>
-            <pubDate>Sun, 16 Aug 2026 17:48:10 +0000</pubDate>
-            <sparkle:version>13</sparkle:version>
-            <sparkle:shortVersionString>0.1.1</sparkle:shortVersionString>
+            <title>0.1.2</title>
+            <pubDate>Sun, 16 Aug 2026 18:04:46 +0000</pubDate>
+            <sparkle:version>14</sparkle:version>
+            <sparkle:shortVersionString>0.1.2</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
             <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
             <description><![CDATA[<!DOCTYPE html><html><head><meta charset="utf-8"><style>body{font-family:-apple-system,sans-serif;font-size:13px;line-height:1.5;padding:8px;}pre{white-space:pre-wrap;}</style></head><body><pre>
@@ -14,16 +14,15 @@
 
 ### 修复
 
-- 安装体验修复：DMG 改为标准安装布局（应用 + Applications 文件夹链接），打开即可拖入安装
-- 从安装镜像直接运行时弹窗引导先安装到 Applications（只读卷上自动更新无法工作）
+- 扫描器不再误报自身：本工具二进制内嵌检测关键词字面量，扫描自己会误判为 Wails，现按 bundle id 无条件跳过任意副本
 
 ### 代码质量
 
-- CI 用 GITHUB_RUN_NUMBER 作为 CFBundleVersion，修复浅克隆下 build 号恒为 1、Sparkle 无法判断更新的问题
+- 新增 AppScanner 自检测回归测试（3 个用例）
 
 </pre></body></html>
 ]]></description>
-            <enclosure url="https://github.com/Acerola-1/too-much-chrome/releases/download/v0.1.1/TooMuchChrome-v0.1.1.zip" length="2635462" type="application/octet-stream" sparkle:edSignature="kbAlPpz0ho7kd+wa9O2AiQ10pLhWUZw6pCXviYrN5KiHTtHHbKAjBl8FfdGgZnQUsoJsVAsdpG9Zxe6G7xmDAw=="/>
+            <enclosure url="https://github.com/Acerola-1/too-much-chrome/releases/download/v0.1.2/TooMuchChrome-v0.1.2.zip" length="2635902" type="application/octet-stream" sparkle:edSignature="9HJqB3g5u/iaOPWaeo54lNI5JDi1dnhsXhjxOH2C21ouexy/4XUyzPXtDdhQcMbjBPUs1ftyWLQRIsedKt5CAg=="/>
         </item>
     </channel>
 </rss>
