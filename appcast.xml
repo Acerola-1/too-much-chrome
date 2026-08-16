@@ -1,0 +1,29 @@
+<?xml version="1.0" standalone="yes"?>
+<rss xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" version="2.0">
+    <channel>
+        <title>TooMuchChrome</title>
+        <item>
+            <title>0.1.0</title>
+            <pubDate>Sun, 16 Aug 2026 17:08:32 +0000</pubDate>
+            <sparkle:version>1</sparkle:version>
+            <sparkle:shortVersionString>0.1.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
+            <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+            <description><![CDATA[<!DOCTYPE html><html><head><meta charset="utf-8"><style>body{font-family:-apple-system,sans-serif;font-size:13px;line-height:1.5;padding:8px;}pre{white-space:pre-wrap;}</style></head><body><pre>
+## 更新内容
+
+### 新功能
+
+- 首个发布版本：Electron / CEF / NW.js / Tauri / Wails 与完整浏览器全家检测
+- 存储占用统计（应用本体 + ~/Library 用户数据）与在线版本健康度分档
+
+### 优化与体验
+
+- Sparkle 自动更新集成；三语官网与 README；GitHub Actions 自动构建 · 签名 · 公证 · 发布
+
+</pre></body></html>
+]]></description>
+            <enclosure url="https://github.com/Acerola-1/too-much-chrome/releases/download/v0.1.0/TooMuchChrome-v0.1.0.zip" length="2631538" type="application/octet-stream" sparkle:edSignature="4iro1ujimre4FjAQgZauKWRopQXg7GjKDJ7N7HHLTlcr77IJ1b63JOnuI+DFK3ux3wsC0JxSdqR4TJ2i3G9rAw=="/>
+        </item>
+    </channel>
+</rss>
