@@ -8,6 +8,10 @@ import Foundation
 
 public enum AppScanner {
 
+    /// 扫描器自身的 bundle id：其二进制内嵌检测关键词字面量（"wailsapp" 等），
+    /// 扫描到自己必然误报 Wails，故永不报告自身（与 build-app.sh 的 BUNDLE_ID 保持一致）
+    public static let ownBundleID = "com.acerola.too-much-chrome"
+
     // MARK: 枚举候选
 
     public static func candidateURLs() -> [URL] {
@@ -48,6 +52,11 @@ public enum AppScanner {
             ?? (plist["CFBundleName"] as? String)
             ?? url.deletingPathExtension().lastPathComponent
         let bundleID = plist["CFBundleIdentifier"] as? String
+
+        // 永不报告自身：自家二进制内嵌检测关键词，任何副本都会自命中
+        if bundleID == ownBundleID || bundleID == Bundle.main.bundleIdentifier {
+            return nil
+        }
         let appVersion = (plist["CFBundleShortVersionString"] as? String)
             ?? (plist["CFBundleVersion"] as? String)
 
