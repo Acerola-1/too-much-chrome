@@ -30,11 +30,15 @@ jobs:
       #   TEAM_ID                   — 开发者团队号
       #   SPARKLE_PRIVATE_KEY       — Sparkle EdDSA 私钥内容（generate_keys --account too-much-chrome 导出）
       - name: 导入 Developer ID 证书
-        if: ${{ secrets.DEVELOPER_ID_P12 != '' }}
         env:
           P12: ${{ secrets.DEVELOPER_ID_P12 }}
           P12_PASSWORD: ${{ secrets.DEVELOPER_ID_P12_PASSWORD }}
         run: |
+          # secrets 未配置时跳过签名导入（build-app.sh 回退 adhoc 签名并跳过公证）
+          if [ -z "$P12" ] || [ -z "$P12_PASSWORD" ]; then
+            echo "未配置 DEVELOPER_ID_P12，将以 adhoc 签名出包"
+            exit 0
+          fi
           cert="$(mktemp -d)/cert.p12"
           printf '%s' "$P12" | base64 --decode > "$cert"
           security create-keychain -p ci ci.keychain
@@ -46,10 +50,12 @@ jobs:
             https://www.apple.com/certificateauthority/DeveloperIDCA.cer
           security import "$RUNNER_TEMP/DeveloperIDCA.cer" -k ci.keychain
           security set-key-partition-list -S apple-tool:,apple: -k ci ci.keychain
-          echo "SIGN_IDENTITY=${{ secrets.SIGN_IDENTITY }}" >> "$GITHUB_ENV"
-          echo "APPLE_ID=${{ secrets.NOTARY_APPLE_ID }}" >> "$GITHUB_ENV"
-          echo "NOTARY_PASSWORD=${{ secrets.NOTARY_PASSWORD }}" >> "$GITHUB_ENV"
-          echo "TEAM_ID=${{ secrets.TEAM_ID }}" >> "$GITHUB_ENV"
+          {
+            echo "SIGN_IDENTITY=${{ secrets.SIGN_IDENTITY }}"
+            echo "APPLE_ID=${{ secrets.NOTARY_APPLE_ID }}"
+            echo "NOTARY_PASSWORD=${{ secrets.NOTARY_PASSWORD }}"
+            echo "TEAM_ID=${{ secrets.TEAM_ID }}"
+          } >> "$GITHUB_ENV"
 
       - name: 构建、签名、公证并打包 DMG
         run: ./scripts/build-app.sh dmg
