@@ -240,6 +240,8 @@ func detectApp(at path: String) -> DetectedApp? {
    目前不检出，如需支持要单列专门签名（2026-08 实测确认）
 6. **用户数据匹配按 bundle id / 应用名**，使用自定义存储路径（如直接写 `~/Documents`）的应用会漏计；
    现覆盖 Application Support / Caches / Containers / WebKit / Saved Application State / Logs 六处
+7. **扫描器永不报告自身** — 本工具的二进制内嵌检测关键词字面量（"wailsapp"/"src-tauri" 等），
+   扫描自己必然误报 Wails，故按 bundle id（`com.acerola.too-much-chrome`）无条件跳过任意副本
 
 ## 参考项目
 
