@@ -1,0 +1,1587 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>加载动画 · 六概念对比台 — Too Much Chrome</title>
+  <style>
+    /* ============================================================
+       加载动画概念对比台
+       在同一个演示窗内完整运行六个开场动画概念，供横向对比。
+       设计令牌与 pages/index.html 保持同源。
+       ============================================================ */
+    :root {
+      --tmc-background: #f5f5f7;
+      --tmc-foreground: #1d1d1f;
+      --tmc-card: rgba(255, 255, 255, 0.72);
+      --tmc-popover: rgba(255, 255, 255, 0.86);
+      --tmc-primary: #007aff;
+      --tmc-muted: rgba(0, 0, 0, 0.05);
+      --tmc-muted-foreground: #86868b;
+      --tmc-border: rgba(0, 0, 0, 0.08);
+      --tmc-ring: #007aff;
+      --tmc-radius-md: 10px;
+      --tmc-radius-lg: 14px;
+      --tmc-radius-xl: 18px;
+      --tmc-font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text",
+        "Helvetica Neue", "PingFang SC", "Microsoft YaHei", sans-serif;
+      --tmc-glass-blur: 24px;
+      --tmc-glass-saturate: 1.8;
+      --tmc-electron: #007aff;
+      --tmc-electron-light: #5ac8fa;
+      --tmc-tauri: #8b5cf6;
+      --tmc-tauri-light: #c4b5fd;
+      --tmc-wails: #06b6d4;
+      --tmc-wails-light: #67e8f9;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --tmc-background: #1c1c1e;
+        --tmc-foreground: #f5f5f7;
+        --tmc-card: rgba(44, 44, 46, 0.72);
+        --tmc-popover: rgba(44, 44, 46, 0.86);
+        --tmc-muted: rgba(255, 255, 255, 0.08);
+        --tmc-muted-foreground: #98989d;
+        --tmc-border: rgba(255, 255, 255, 0.12);
+      }
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html,
+    body {
+      font-family: var(--tmc-font-sans);
+      background: var(--tmc-background);
+      color: var(--tmc-foreground);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      padding: 36px 24px 60px;
+    }
+
+    .page {
+      width: 900px;
+      max-width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* ---------- 页头 ---------- */
+    .page-head {
+      text-align: center;
+      margin-bottom: 22px;
+    }
+
+    .page-title {
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .page-sub {
+      font-size: 13px;
+      color: var(--tmc-muted-foreground);
+      margin-top: 6px;
+    }
+
+    .page-sub kbd {
+      font-family: inherit;
+      font-size: 11px;
+      padding: 1px 6px;
+      border-radius: 5px;
+      background: var(--tmc-muted);
+      border: 1px solid var(--tmc-border);
+    }
+
+    /* ---------- 概念切换胶囊 ---------- */
+    .concept-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 4px;
+      background: var(--tmc-muted);
+      border-radius: 999px;
+      padding: 4px;
+      margin-bottom: 20px;
+    }
+
+    .concept-tab {
+      padding: 7px 16px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--tmc-foreground);
+      background: transparent;
+      border: none;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .concept-tab:hover {
+      color: var(--tmc-primary);
+    }
+
+    .concept-tab.active {
+      background: var(--tmc-primary);
+      color: #fff;
+      box-shadow: 0 1px 3px rgba(0, 122, 255, 0.3);
+    }
+
+    /* ---------- 演示窗 ---------- */
+    .demo-window {
+      position: relative;
+      width: 860px;
+      max-width: 100%;
+      height: 560px;
+      background: var(--tmc-background);
+      border-radius: var(--tmc-radius-xl);
+      box-shadow:
+        0 30px 80px rgba(0, 0, 0, 0.12),
+        0 10px 30px rgba(0, 0, 0, 0.08),
+        0 0 0 1px rgba(0, 0, 0, 0.06);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      user-select: none;
+    }
+
+    .demo-toolbar {
+      flex: none;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      height: 54px;
+      padding: 0 20px;
+      background: var(--tmc-card);
+      backdrop-filter: blur(var(--tmc-glass-blur)) saturate(var(--tmc-glass-saturate));
+      -webkit-backdrop-filter: blur(var(--tmc-glass-blur)) saturate(var(--tmc-glass-saturate));
+      border-bottom: 1px solid var(--tmc-border);
+    }
+
+    .traffic-lights {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: none;
+    }
+
+    .traffic-btn {
+      position: relative;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      border: 0.5px solid rgba(0, 0, 0, 0.12);
+      cursor: default;
+      padding: 0;
+    }
+
+    .traffic-btn::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0.06) 48%, rgba(0, 0, 0, 0.05));
+      pointer-events: none;
+    }
+
+    .traffic-btn.close { background: #ff5f57; }
+    .traffic-btn.minimize { background: #febc2e; }
+    .traffic-btn.zoom { background: #28c840; }
+
+    .demo-title-block {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+      min-width: 0;
+    }
+
+    .demo-title {
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+    }
+
+    .demo-subtitle {
+      font-size: 11px;
+      color: var(--tmc-muted-foreground);
+    }
+
+    .toolbar-spacer { flex: 1; }
+
+    .replay-btn {
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--tmc-card);
+      border: 1px solid var(--tmc-border);
+      border-radius: 50%;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      flex: none;
+    }
+
+    .replay-btn:hover {
+      background: var(--tmc-primary);
+      border-color: var(--tmc-primary);
+      transform: scale(1.05);
+    }
+
+    .replay-btn:hover svg { stroke: #fff; }
+
+    .replay-btn:active { transform: scale(0.95); }
+
+    .replay-btn svg {
+      width: 15px;
+      height: 15px;
+      stroke: var(--tmc-foreground);
+      stroke-width: 2;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      transition: stroke 0.2s ease;
+    }
+
+    /* ---------- 演示内容区 ---------- */
+    .demo-content {
+      position: relative;
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .demo-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 12px 14px;
+      width: 100%;
+      max-width: 660px;
+    }
+
+    .icon-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      border: none;
+      background: none;
+      padding: 2px;
+      opacity: 0;
+      position: relative;
+      cursor: default;
+    }
+
+    .icon-card.visible,
+    .icon-card.on {
+      opacity: 1;
+    }
+
+    .iwrap { position: relative; display: block; }
+
+    .app-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 11px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 17px;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: -0.02em;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+      box-shadow:
+        0 4px 12px rgba(0, 0, 0, 0.10),
+        0 1px 3px rgba(0, 0, 0, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.22);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .app-icon.electron { background: linear-gradient(135deg, var(--tmc-electron-light), var(--tmc-electron)); }
+    .app-icon.tauri { background: linear-gradient(135deg, var(--tmc-tauri-light), var(--tmc-tauri)); }
+    .app-icon.wails { background: linear-gradient(135deg, var(--tmc-wails-light), var(--tmc-wails)); }
+
+    .app-name {
+      font-size: 10px;
+      font-weight: 500;
+      max-width: 76px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      text-align: center;
+      line-height: 1.2;
+    }
+
+    .app-size {
+      font-size: 9px;
+      color: var(--tmc-muted-foreground);
+      font-variant-numeric: tabular-nums;
+      line-height: 1;
+    }
+
+    /* ---------- 状态栏 ---------- */
+    .demo-status {
+      flex: none;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      background: var(--tmc-card);
+      backdrop-filter: blur(var(--tmc-glass-blur)) saturate(var(--tmc-glass-saturate));
+      -webkit-backdrop-filter: blur(var(--tmc-glass-blur)) saturate(var(--tmc-glass-saturate));
+      border-top: 1px solid var(--tmc-border);
+      font-size: 12px;
+      color: var(--tmc-muted-foreground);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .demo-status b {
+      color: var(--tmc-foreground);
+      font-weight: 600;
+    }
+
+    /* ============================================================
+       特效层（所有概念的临时元素都挂在 #fx 下）
+       ============================================================ */
+    #fx {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 5;
+    }
+
+    /* 飞行图标（标签跌落 / 分裂散开等复用） */
+    .fx-icon {
+      position: absolute;
+      z-index: 6;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: -0.02em;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+      box-shadow:
+        0 6px 16px rgba(0, 0, 0, 0.16),
+        inset 0 1px 0 rgba(255, 255, 255, 0.22);
+      will-change: transform, width, height;
+    }
+
+    .fx-icon.electron { background: linear-gradient(135deg, var(--tmc-electron-light), var(--tmc-electron)); }
+    .fx-icon.tauri { background: linear-gradient(135deg, var(--tmc-tauri-light), var(--tmc-tauri)); }
+    .fx-icon.wails { background: linear-gradient(135deg, var(--tmc-wails-light), var(--tmc-wails)); }
+
+    /* ① 标签页瀑布 */
+    .tab-strip {
+      position: absolute;
+      top: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: min(640px, 88%);
+      display: flex;
+      gap: 2px;
+      padding: 5px 5px 0;
+      background: rgba(120, 120, 128, 0.12);
+      border-radius: 10px 10px 0 0;
+      z-index: 6;
+    }
+
+    .tab {
+      height: 24px;
+      flex: 1 1 0;
+      min-width: 12px;
+      max-width: 66px;
+      border-radius: 7px 7px 0 0;
+      font-size: 9px;
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      white-space: nowrap;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28);
+    }
+
+    .tab.electron { background: linear-gradient(180deg, rgba(90, 200, 250, 0.9), rgba(0, 122, 255, 0.9)); }
+    .tab.tauri { background: linear-gradient(180deg, rgba(196, 181, 253, 0.9), rgba(139, 92, 246, 0.9)); }
+    .tab.wails { background: linear-gradient(180deg, rgba(103, 232, 249, 0.9), rgba(6, 182, 212, 0.9)); }
+
+    /* ② 雷达 */
+    .vignette {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.22);
+      opacity: 0;
+      z-index: 4;
+    }
+
+    .radar-rings {
+      position: absolute;
+      border-radius: 50%;
+      border: 1px solid rgba(0, 122, 255, 0.16);
+      z-index: 4;
+    }
+
+    .beam {
+      position: absolute;
+      border-radius: 50%;
+      z-index: 5;
+      background: conic-gradient(from 0deg,
+        rgba(0, 122, 255, 0) 0deg,
+        rgba(0, 122, 255, 0.02) 290deg,
+        rgba(0, 122, 255, 0.16) 330deg,
+        rgba(0, 122, 255, 0.38) 356deg,
+        rgba(120, 195, 255, 0.6) 360deg);
+      will-change: transform;
+    }
+
+    /* 涟漪（雷达 ping / 落地冲击共用） */
+    .ripple {
+      position: absolute;
+      width: 22px;
+      height: 22px;
+      border: 2px solid var(--tmc-primary);
+      border-radius: 50%;
+      transform: translate(-50%, -50%) scale(0.3);
+      opacity: 0;
+      z-index: 6;
+    }
+
+    /* ③ Chromium 原子徽标 */
+    .atom {
+      position: absolute;
+      width: 96px;
+      height: 96px;
+      z-index: 6;
+    }
+
+    .atom .nucleus {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 16px;
+      height: 16px;
+      margin: -8px 0 0 -8px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #5ac8fa, #007aff);
+      box-shadow: 0 0 18px rgba(0, 122, 255, 0.55);
+    }
+
+    .atom .orbit {
+      position: absolute;
+      inset: 0;
+      animation: orbitSpin 1.7s linear infinite;
+      will-change: transform;
+    }
+
+    .atom .orbit i {
+      position: absolute;
+      inset: 0;
+      border: 1.5px solid rgba(0, 122, 255, 0.5);
+      border-radius: 50%;
+      transform: rotate(var(--tilt)) scaleY(0.36);
+    }
+
+    .atom .orbit b {
+      position: absolute;
+      left: 50%;
+      top: 0;
+      width: 7px;
+      height: 7px;
+      margin: -3.5px 0 0 -3.5px;
+      border-radius: 50%;
+      background: #5ac8fa;
+      transform: scaleY(2.8);
+      box-shadow: 0 0 8px rgba(90, 200, 250, 0.8);
+    }
+
+    @keyframes orbitSpin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    /* ⑥ 扫描线 */
+    .scanline {
+      position: absolute;
+      top: 6px;
+      bottom: 6px;
+      width: 64px;
+      margin-left: -32px;
+      z-index: 5;
+      background: linear-gradient(90deg,
+        rgba(0, 122, 255, 0) 0%,
+        rgba(0, 122, 255, 0.05) 55%,
+        rgba(0, 122, 255, 0.14) 90%,
+        rgba(90, 200, 250, 0.5) 99%,
+        rgba(0, 122, 255, 0) 100%);
+    }
+
+    .scanline::after {
+      content: '';
+      position: absolute;
+      right: 3px;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      border-radius: 2px;
+      background: rgba(120, 195, 255, 0.85);
+      box-shadow: 0 0 12px rgba(0, 122, 255, 0.6);
+    }
+
+    /* 微文案 toast */
+    .toast {
+      position: absolute;
+      left: 50%;
+      top: 44%;
+      transform: translate(-50%, -50%);
+      padding: 10px 20px;
+      border-radius: 999px;
+      background: var(--tmc-popover);
+      backdrop-filter: blur(var(--tmc-glass-blur)) saturate(var(--tmc-glass-saturate));
+      -webkit-backdrop-filter: blur(var(--tmc-glass-blur)) saturate(var(--tmc-glass-saturate));
+      border: 1px solid var(--tmc-border);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.14);
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--tmc-foreground);
+      opacity: 0;
+      white-space: nowrap;
+      z-index: 8;
+    }
+
+    .toast.mini {
+      top: 14%;
+      font-size: 12px;
+      font-weight: 500;
+      padding: 7px 14px;
+      color: var(--tmc-muted-foreground);
+    }
+
+    /* ---------- 显现关键帧 ---------- */
+    .icon-card.in-ping {
+      animation: inPing 0.26s cubic-bezier(0.2, 0.9, 0.3, 1.3) both;
+    }
+
+    @keyframes inPing {
+      0% { opacity: 0; transform: scale(0.25); }
+      60% { opacity: 1; transform: scale(1.14); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+
+    .icon-card.in-scan {
+      animation: inScan 0.3s cubic-bezier(0.25, 0.6, 0.35, 1) both;
+    }
+
+    @keyframes inScan {
+      0% { opacity: 0; filter: blur(10px); transform: translateY(5px) scale(0.96); }
+      100% { opacity: 1; filter: blur(0); transform: none; }
+    }
+
+    .icon-card.in-pop {
+      animation: inPop 0.2s cubic-bezier(0.2, 0.9, 0.35, 1.25) both;
+    }
+
+    @keyframes inPop {
+      0% { opacity: 0; transform: scale(0.3); }
+      70% { opacity: 1; transform: scale(1.1, 0.88); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+
+    /* ---------- 概念说明卡 ---------- */
+    .concept-card {
+      width: 860px;
+      max-width: 100%;
+      margin-top: 20px;
+      padding: 20px 24px;
+      border-radius: var(--tmc-radius-lg);
+      background: var(--tmc-card);
+      backdrop-filter: blur(var(--tmc-glass-blur)) saturate(var(--tmc-glass-saturate));
+      -webkit-backdrop-filter: blur(var(--tmc-glass-blur)) saturate(var(--tmc-glass-saturate));
+      border: 1px solid var(--tmc-border);
+      display: flex;
+      gap: 24px;
+      align-items: flex-start;
+    }
+
+    .cc-main { flex: 1; min-width: 0; }
+
+    .cc-tagline {
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      margin-bottom: 10px;
+    }
+
+    .cc-points {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .cc-points li {
+      font-size: 12.5px;
+      line-height: 1.55;
+      color: var(--tmc-muted-foreground);
+      padding-left: 16px;
+      position: relative;
+    }
+
+    .cc-points li::before {
+      content: '';
+      position: absolute;
+      left: 2px;
+      top: 7px;
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--tmc-primary);
+    }
+
+    .cc-meta {
+      flex: none;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      align-items: flex-end;
+    }
+
+    .cc-chip {
+      font-size: 11px;
+      padding: 3px 10px;
+      border-radius: 999px;
+      background: var(--tmc-muted);
+      color: var(--tmc-muted-foreground);
+      white-space: nowrap;
+    }
+
+    .cc-chip.hl {
+      background: rgba(0, 122, 255, 0.12);
+      color: var(--tmc-primary);
+    }
+
+    .page-foot {
+      margin-top: 18px;
+      font-size: 11px;
+      color: var(--tmc-muted-foreground);
+      text-align: center;
+      line-height: 1.6;
+    }
+
+    /* ---------- 减少动效降级 ---------- */
+    @media (prefers-reduced-motion: reduce) {
+      .icon-card.in-ping,
+      .icon-card.in-scan,
+      .icon-card.in-pop,
+      .atom .orbit {
+        animation: none !important;
+      }
+
+      .concept-tab,
+      .replay-btn {
+        transition: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="page-head">
+      <div class="page-title">加载动画 · 六概念对比台</div>
+      <div class="page-sub">Too Much Chrome — 同一演示窗完整走一遍各概念的开场 · <kbd>1</kbd>–<kbd>6</kbd> 切换 · <kbd>R</kbd> 重播</div>
+    </div>
+
+    <nav class="concept-tabs" id="conceptTabs"></nav>
+
+    <div class="demo-window">
+      <header class="demo-toolbar">
+        <div class="traffic-lights">
+          <span class="traffic-btn close"></span>
+          <span class="traffic-btn minimize"></span>
+          <span class="traffic-btn zoom"></span>
+        </div>
+        <div class="demo-title-block">
+          <div class="demo-title">Too Much Chrome</div>
+          <div class="demo-subtitle" id="tbConcept">—</div>
+        </div>
+        <div class="toolbar-spacer"></div>
+        <button class="replay-btn" id="replayBtn" title="重播当前概念">
+          <svg viewBox="0 0 24 24">
+            <path d="M23 4v6h-6" />
+            <path d="M1 20v-6h6" />
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10" />
+            <path d="M20.49 15a9 9 0 0 1-14.85 3.36L1 14" />
+          </svg>
+        </button>
+      </header>
+
+      <div class="demo-content" id="demoContent">
+        <div class="demo-grid" id="demoGrid"></div>
+        <div id="fx"></div>
+      </div>
+
+      <footer class="demo-status">
+        <span>已捕获 <b id="statCount">0</b> / <span id="statTotal">0</span> 个应用</span>
+        <span>合计 <b id="statSize">0.0</b> GB</span>
+      </footer>
+    </div>
+
+    <aside class="concept-card" id="conceptCard"></aside>
+
+    <div class="page-foot">
+      每个概念结束后状态栏数值即最终统计 · 系统开启「减少动态效果」时，所有概念降级为直接显现<br />
+      数据与 pages/index.html 同源（28 Electron / 4 Tauri / 3 Wails，体积字段用于概念④的距离编码与概念②的涟漪编码）
+    </div>
+  </div>
+
+  <script>
+    /* ============================================================
+       数据（与 pages/index.html 同源，保证体积编码可比）
+       ============================================================ */
+    const APPS = [
+      { name: 'VS Code', type: 'electron', bodyMB: 380, dataMB: 620 },
+      { name: 'Slack', type: 'electron', bodyMB: 320, dataMB: 540 },
+      { name: 'Discord', type: 'electron', bodyMB: 290, dataMB: 780 },
+      { name: 'Figma', type: 'electron', bodyMB: 310, dataMB: 260 },
+      { name: 'Notion', type: 'electron', bodyMB: 350, dataMB: 410 },
+      { name: 'Spotify', type: 'electron', bodyMB: 280, dataMB: 350 },
+      { name: 'Trello', type: 'electron', bodyMB: 260, dataMB: 95 },
+      { name: 'Postman', type: 'electron', bodyMB: 420, dataMB: 310 },
+      { name: 'Zoom', type: 'electron', bodyMB: 340, dataMB: 220 },
+      { name: 'Skype', type: 'electron', bodyMB: 300, dataMB: 180 },
+      { name: 'Twitch', type: 'electron', bodyMB: 270, dataMB: 120 },
+      { name: 'WhatsApp', type: 'electron', bodyMB: 290, dataMB: 240 },
+      { name: 'Telegram', type: 'electron', bodyMB: 250, dataMB: 380 },
+      { name: 'Signal', type: 'electron', bodyMB: 280, dataMB: 160 },
+      { name: 'Minecraft Launcher', type: 'electron', bodyMB: 330, dataMB: 90 },
+      { name: 'GitHub Desktop', type: 'electron', bodyMB: 360, dataMB: 140 },
+      { name: 'Atom', type: 'electron', bodyMB: 310, dataMB: 210 },
+      { name: '1Password', type: 'electron', bodyMB: 270, dataMB: 85 },
+      { name: 'Dropbox', type: 'electron', bodyMB: 400, dataMB: 450 },
+      { name: 'Evernote', type: 'electron', bodyMB: 350, dataMB: 520 },
+      { name: 'Asana', type: 'electron', bodyMB: 260, dataMB: 110 },
+      { name: 'Basecamp', type: 'electron', bodyMB: 255, dataMB: 75 },
+      { name: 'Linear', type: 'electron', bodyMB: 320, dataMB: 200 },
+      { name: 'Insomnia', type: 'electron', bodyMB: 340, dataMB: 130 },
+      { name: 'MongoDB Compass', type: 'electron', bodyMB: 380, dataMB: 95 },
+      { name: 'Redis Insight', type: 'electron', bodyMB: 355, dataMB: 88 },
+      { name: 'Docker Desktop', type: 'electron', bodyMB: 700, dataMB: 800 },
+      { name: 'Arc', type: 'electron', bodyMB: 450, dataMB: 640 },
+      { name: 'Spacedrive', type: 'tauri', bodyMB: 28, dataMB: 120 },
+      { name: 'Lapce', type: 'tauri', bodyMB: 24, dataMB: 60 },
+      { name: 'Prism Launcher', type: 'tauri', bodyMB: 30, dataMB: 210 },
+      { name: 'Espanso', type: 'tauri', bodyMB: 18, dataMB: 35 },
+      { name: 'Rayso', type: 'wails', bodyMB: 22, dataMB: 40 },
+      { name: 'Vesktop', type: 'wails', bodyMB: 26, dataMB: 150 },
+      { name: 'Itch Manager', type: 'wails', bodyMB: 20, dataMB: 55 }
+    ];
+
+    const TYPE_COLOR = {
+      electron: 'var(--tmc-electron)',
+      tauri: 'var(--tmc-tauri)',
+      wails: 'var(--tmc-wails)'
+    };
+
+    const totalMB = a => a.bodyMB + a.dataMB;
+    const MAX_MB = Math.max(...APPS.map(totalMB));
+    const SUM_MB = APPS.reduce((s, a) => s + totalMB(a), 0);
+
+    function getInitials(appName) {
+      const words = appName.split(/[\s\-]/).filter(w => w.length > 0);
+      if (words.length === 1) return words[0].charAt(0).toUpperCase();
+      return (words[0].charAt(0) + words[1].charAt(0)).toUpperCase();
+    }
+
+    function fmtMB(mb) {
+      return mb >= 1024 ? (mb / 1024).toFixed(1) + ' GB' : Math.round(mb) + ' MB';
+    }
+
+    /* ============================================================
+       DOM 与网格
+       ============================================================ */
+    const grid = document.getElementById('demoGrid');
+    const fx = document.getElementById('fx');
+    const cards = [];
+
+    APPS.forEach((app, i) => {
+      const card = document.createElement('div');
+      card.className = 'icon-card';
+      card.title = `${app.name} · ${fmtMB(totalMB(app))}`;
+
+      const wrap = document.createElement('span');
+      wrap.className = 'iwrap';
+      const icon = document.createElement('div');
+      icon.className = `app-icon ${app.type}`;
+      icon.textContent = getInitials(app.name);
+      wrap.appendChild(icon);
+
+      const name = document.createElement('div');
+      name.className = 'app-name';
+      name.textContent = app.name;
+
+      const size = document.createElement('div');
+      size.className = 'app-size';
+      size.textContent = fmtMB(totalMB(app));
+
+      card.appendChild(wrap);
+      card.appendChild(name);
+      card.appendChild(size);
+      grid.appendChild(card);
+      cards.push(card);
+    });
+
+    document.getElementById('statTotal').textContent = APPS.length;
+
+    /* ============================================================
+       运行时：令牌取消 / 定时 / rAF / WAAPI 登记
+       ============================================================ */
+    const state = { token: 0, count: 0, mb: 0, raf: 0 };
+    const anims = new Set();
+
+    const fresh = t => t === state.token;
+    const wait = (t, ms, fn) => setTimeout(() => { if (fresh(t)) fn(); }, ms);
+
+    function rafLoop(t, fn) {
+      state.raf = requestAnimationFrame(function loop(ts) {
+        if (!fresh(t)) return;
+        if (fn(ts) === false) return;
+        state.raf = requestAnimationFrame(loop);
+      });
+    }
+
+    function A(elm, kf, opt) {
+      const a = elm.animate(kf, opt);
+      anims.add(a);
+      a.finished && a.finished.catch(() => {});
+      a.addEventListener('finish', () => anims.delete(a));
+      return a;
+    }
+
+    function resetStage() {
+      state.token++;
+      if (state.raf) cancelAnimationFrame(state.raf);
+      state.raf = 0;
+      anims.forEach(a => { try { a.cancel(); } catch (e) {} });
+      anims.clear();
+      fx.innerHTML = '';
+      cards.forEach(c => { c.className = 'icon-card'; c.style.cssText = ''; });
+      state.count = 0;
+      state.mb = 0;
+      renderStatus();
+    }
+
+    function renderStatus() {
+      document.getElementById('statCount').textContent = state.count;
+      document.getElementById('statSize').textContent = (state.mb / 1024).toFixed(1);
+    }
+
+    function tick(app) {
+      state.count++;
+      state.mb += totalMB(app);
+      renderStatus();
+    }
+
+    const reduced = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    function instantAll() {
+      cards.forEach(c => c.classList.add('visible'));
+      state.count = APPS.length;
+      state.mb = SUM_MB;
+      renderStatus();
+    }
+
+    /* ============================================================
+       几何与特效元素工具
+       ============================================================ */
+    function rects() {
+      const fr = fx.getBoundingClientRect();
+      return cards.map(c => {
+        const r = c.getBoundingClientRect();
+        return { x: r.left - fr.left + r.width / 2, y: r.top - fr.top + r.height / 2 };
+      });
+    }
+
+    function fxRect() {
+      const r = fx.getBoundingClientRect();
+      return { w: r.width, h: r.height, cx: r.width / 2, cy: r.height / 2 };
+    }
+
+    function fxIcon(app, size) {
+      const d = document.createElement('div');
+      d.className = `fx-icon ${app.type}`;
+      d.style.width = size + 'px';
+      d.style.height = size + 'px';
+      d.style.borderRadius = Math.round(size * 0.25) + 'px';
+      d.style.fontSize = Math.round(size * 0.38) + 'px';
+      d.textContent = getInitials(app.name);
+      return d;
+    }
+
+    function ring(x, y, color, scale) {
+      const r = document.createElement('div');
+      r.className = 'ripple';
+      r.style.left = x + 'px';
+      r.style.top = y + 'px';
+      if (color) r.style.borderColor = color;
+      fx.appendChild(r);
+      const a = A(r, [
+        { transform: 'translate(-50%,-50%) scale(0.25)', opacity: 0.7 },
+        { transform: `translate(-50%,-50%) scale(${scale})`, opacity: 0 }
+      ], { duration: 480, easing: 'cubic-bezier(0.2, 0.6, 0.4, 1)' });
+      a.addEventListener('finish', () => r.remove());
+    }
+
+    function toast(text, opts = {}) {
+      const { dur = 1100, mini = false, delay = 0 } = opts;
+      const el = document.createElement('div');
+      el.className = 'toast' + (mini ? ' mini' : '');
+      el.textContent = text;
+      fx.appendChild(el);
+      const show = () => {
+        A(el, [{ opacity: 0, transform: 'translate(-50%,-50%) scale(0.92)' },
+               { opacity: 1, transform: 'translate(-50%,-50%) scale(1)' }],
+          { duration: 180, easing: 'ease-out', fill: 'forwards' });
+        const a = A(el, [{ opacity: 1 }, { opacity: 0 }], { duration: 260, delay: dur, easing: 'ease-in', fill: 'forwards' });
+        a.addEventListener('finish', () => el.remove());
+      };
+      if (delay) setTimeout(show, delay); else show();
+    }
+
+    /* ============================================================
+       概念① 标签页瀑布
+       ============================================================ */
+    function playTabs(t) {
+      const strip = document.createElement('div');
+      strip.className = 'tab-strip';
+      fx.appendChild(strip);
+      A(strip, [{ transform: 'translate(-50%,-14px)', opacity: 0 },
+                { transform: 'translate(-50%,0)', opacity: 1 }],
+        { duration: 180, easing: 'ease-out', fill: 'forwards' });
+
+      const tabs = APPS.map(app => {
+        const el = document.createElement('div');
+        el.className = `tab ${app.type}`;
+        el.textContent = getInitials(app.name);
+        el.style.opacity = '0';
+        strip.appendChild(el);
+        return el;
+      });
+
+      // ⌘T 狂开标签：12ms 一个，标签条逐渐拥挤
+      tabs.forEach((el, i) => wait(t, 240 + i * 12, () => {
+        el.style.opacity = '1';
+        A(el, [{ transform: 'scale(0.6)' }, { transform: 'scale(1)' }], { duration: 110, easing: 'ease-out' });
+      }));
+
+      const fallStart = 240 + APPS.length * 12 + 170;
+      const fr = fx.getBoundingClientRect();
+
+      APPS.forEach((app, i) => wait(t, fallStart + i * 20, () => {
+        const tab = tabs[i];
+        const tr = tab.getBoundingClientRect();
+        const sx = tr.left - fr.left + tr.width / 2;
+        const sy = tr.top - fr.top + tr.height / 2;
+        tab.style.visibility = 'hidden';
+
+        const R = rects();
+        const slot = R[i];
+        const dx = slot.x - sx;
+        const dy = slot.y - sy;
+        const rot = Math.random() * 26 - 13;
+
+        const flyer = fxIcon(app, 44);
+        flyer.style.left = sx + 'px';
+        flyer.style.top = sy + 'px';
+        fx.appendChild(flyer);
+
+        const half = 'translate(-50%,-50%) ';
+        const a = A(flyer, [
+          { width: tr.width + 'px', height: tr.height + 'px', borderRadius: '7px 7px 0 0',
+            transform: half + 'translate(0px,0px) rotate(0deg)', opacity: 1 },
+          { width: '44px', height: '44px', borderRadius: '11px',
+            transform: half + `translate(${dx * 0.55}px,${dy * 0.48}px) rotate(${rot}deg)`, offset: 0.55 },
+          { transform: half + `translate(${dx}px,${dy}px) rotate(0deg) scale(1, 0.86)`, offset: 0.9 },
+          { transform: half + `translate(${dx}px,${dy}px) rotate(0deg) scale(1)` }
+        ], { duration: 430, easing: 'cubic-bezier(0.3, 0.7, 0.4, 1)' });
+
+        a.addEventListener('finish', () => {
+          flyer.remove();
+          cards[i].classList.add('visible', 'in-pop');
+          tick(app);
+        });
+      }));
+
+      const total = fallStart + (APPS.length - 1) * 20 + 430;
+      wait(t, total + 260, () => {
+        A(strip, [{ opacity: 1 }, { opacity: 0 }], { duration: 220, fill: 'forwards' })
+          .addEventListener('finish', () => strip.remove());
+        toast('你装了 35 个『浏览器』', { dur: 1200 });
+      });
+    }
+
+    /* ============================================================
+       概念② 雷达扫描（原位显现 + 体积编码涟漪）
+       ============================================================ */
+    function playRadar(t) {
+      const R = rects();
+      const F = fxRect();
+
+      const vig = document.createElement('div');
+      vig.className = 'vignette';
+      fx.appendChild(vig);
+      A(vig, [{ opacity: 0 }, { opacity: 1 }], { duration: 160, fill: 'forwards' });
+
+      const D = Math.max(F.w, F.h) * 1.5;
+      [0.42, 0.68, 0.94].forEach(k => {
+        const r = document.createElement('div');
+        r.className = 'radar-rings';
+        r.style.width = r.style.height = (D * k) + 'px';
+        r.style.left = (F.cx - D * k / 2) + 'px';
+        r.style.top = (F.cy - D * k / 2) + 'px';
+        fx.appendChild(r);
+      });
+
+      const beam = document.createElement('div');
+      beam.className = 'beam';
+      beam.style.width = beam.style.height = D + 'px';
+      beam.style.left = (F.cx - D / 2) + 'px';
+      beam.style.top = (F.cy - D / 2) + 'px';
+      fx.appendChild(beam);
+      beam.style.transform = 'rotate(-90deg)';
+      A(beam, [{ opacity: 0 }, { opacity: 0.95 }], { duration: 200, fill: 'forwards' });
+
+      // 每个槽位相对扫描起点的角度（CSS conic 0° 指向 12 点，顺时针）
+      const items = R.map((pt, i) => ({
+        i, pt,
+        rel: ((Math.atan2(pt.y - F.cy, pt.x - F.cx) * 180 / Math.PI + 180) % 360 + 360) % 360
+      })).sort((a, b) => a.rel - b.rel);
+
+      const turns = 1.15;
+      const dur = 1500;
+      const t0 = performance.now() + 260;
+      let idx = 0;
+      let done = false;
+
+      rafLoop(t, now => {
+        if (done) return false;
+        const e = now - t0;
+        if (e < 0) return;
+        const p = Math.min(e / dur, 1);
+        const sweep = -90 + p * turns * 360;
+        beam.style.transform = `rotate(${sweep}deg)`;
+        const rel = ((sweep + 90) % 360 + 360) % 360;
+
+        while (idx < items.length && items[idx].rel <= rel) {
+          const it = items[idx++];
+          const app = APPS[it.i];
+          cards[it.i].classList.add('visible', 'in-ping');
+          const size = totalMB(app);
+          ring(it.pt.x, it.pt.y, TYPE_COLOR[app.type], 0.7 + (size / MAX_MB) * 2.1);
+          tick(app);
+        }
+
+        if (p >= 1 && idx >= items.length) {
+          done = true;
+          wait(t, 180, () => {
+            A(beam, [{ opacity: 0.95 }, { opacity: 0 }], { duration: 260, fill: 'forwards' })
+              .addEventListener('finish', () => beam.remove());
+            A(vig, [{ opacity: 1 }, { opacity: 0 }], { duration: 300, fill: 'forwards' })
+              .addEventListener('finish', () => vig.remove());
+            fx.querySelectorAll('.radar-rings').forEach(r => r.remove());
+            toast('已定位 35 个 WebView 应用', { dur: 1100 });
+          });
+          return false;
+        }
+      });
+    }
+
+    /* ============================================================
+       概念③ Chromium 有丝分裂
+       ============================================================ */
+    function playMitosis(t) {
+      const F = fxRect();
+      const gcx = F.cx, gcy = F.cy;
+
+      // 原子徽标
+      const atom = document.createElement('div');
+      atom.className = 'atom';
+      atom.style.left = (gcx - 48) + 'px';
+      atom.style.top = (gcy - 48) + 'px';
+      for (let k = 0; k < 3; k++) {
+        const o = document.createElement('div');
+        o.className = 'orbit';
+        o.style.animationDelay = (k * -0.55) + 's';
+        const ring = document.createElement('i');
+        ring.style.setProperty('--tilt', (k * 60) + 'deg');
+        const e = document.createElement('b');
+        o.appendChild(ring);
+        o.appendChild(e);
+        atom.appendChild(o);
+      }
+      const nuc = document.createElement('div');
+      nuc.className = 'nucleus';
+      atom.appendChild(nuc);
+      fx.appendChild(atom);
+      A(atom, [{ transform: 'scale(0.3)', opacity: 0 },
+               { transform: 'scale(1.08)', opacity: 1, offset: 0.7 },
+               { transform: 'scale(1)', opacity: 1 }],
+        { duration: 240, easing: 'cubic-bezier(0.2, 0.9, 0.35, 1.2)', fill: 'forwards' });
+
+      // 分裂前的挤压预兆
+      wait(t, 330, () => {
+        A(atom, [{ transform: 'scale(1)' }, { transform: 'scale(1.18, 0.82)' },
+                 { transform: 'scale(0.95, 1.06)' }],
+          { duration: 130, easing: 'ease-in-out' });
+      });
+
+      // 黄金角螺旋簇位置
+      const spiral = i => {
+        const r = 16 * Math.sqrt(i + 1);
+        const th = i * 2.399963;
+        return { x: gcx + r * Math.cos(th), y: gcy + r * Math.sin(th) };
+      };
+
+      const cluster = []; // {el, x, y}
+      const spawnIcon = (app, pos, dur) => {
+        const el = fxIcon(app, 44);
+        el.style.left = (pos.x - 22) + 'px';
+        el.style.top = (pos.y - 22) + 'px';
+        fx.appendChild(el);
+        const dx = pos.x - gcx;
+        const dy = pos.y - gcy;
+        A(el, [
+          { transform: 'translate(0,0) scale(0.15)', opacity: 0.4 },
+          { transform: `translate(${dx * 0.8}px,${dy * 0.8}px) scale(1.14, 0.84)`, opacity: 1, offset: 0.7 },
+          { transform: `translate(${dx}px,${dy}px) scale(1)` }
+        ], { duration: dur, easing: 'cubic-bezier(0.25, 0.7, 0.35, 1)' });
+        cluster.push({ el, app, pos });
+      };
+
+      // 指数分裂：1→2→4→8→16→28（Electron）
+      const gens = [[1, 480], [2, 585], [4, 690], [8, 790], [16, 885], [28, 975]];
+      let prev = 0;
+      gens.forEach(([count, time]) => {
+        wait(t, time, () => {
+          if (count === 1) {
+            A(atom, [{ transform: 'scale(1)', opacity: 1 }, { transform: 'scale(0.1)', opacity: 0 }],
+              { duration: 150, fill: 'forwards' }).addEventListener('finish', () => atom.remove());
+          }
+          for (let i = prev; i < count; i++) spawnIcon(APPS[i], spiral(i), 150);
+          prev = count;
+        });
+      });
+
+      // Tauri / Wails 侧芽
+      wait(t, 1065, () => {
+        for (let i = 28; i < 35; i++) {
+          const a = (i - 28) / 7 * Math.PI * 2 + 0.7;
+          const r = 118 + Math.random() * 22;
+          spawnIcon(APPS[i], { x: gcx + r * Math.cos(a), y: gcy + r * Math.sin(a) }, 130);
+        }
+      });
+
+      // 散开：按槽位离中心距离分层波次飞向网格
+      wait(t, 1180, () => {
+        const R = rects();
+        const order = cluster
+          .map((c, k) => ({ c, k, d: Math.hypot(R[k].x - gcx, R[k].y - gcy) }))
+          .sort((a, b) => a.d - b.d);
+
+        order.forEach(({ c, k, d }, rank) => {
+          wait(t, 40 + rank * 12, () => {
+            const slot = R[k];
+            const dx = slot.x - c.pos.x;
+            const dy = slot.y - c.pos.y;
+            const cur = c.pos.x - gcx;
+            const cury = c.pos.y - gcy;
+            const a = A(c.el, [
+              { transform: `translate(${cur}px,${cury}px) scale(1)` },
+              { transform: `translate(${cur + dx * 0.6}px,${cury + dy * 0.6}px) scale(1.07)`, offset: 0.6 },
+              { transform: `translate(${cur + dx}px,${cury + dy}px) scale(0.96, 1.06)`, offset: 0.9 },
+              { transform: `translate(${cur + dx}px,${cury + dy}px) scale(1)` }
+            ], { duration: 360, easing: 'cubic-bezier(0.3, 0.8, 0.4, 1)' });
+            a.addEventListener('finish', () => {
+              c.el.remove();
+              cards[k].classList.add('visible', 'in-pop');
+              tick(c.app);
+            });
+          });
+        });
+
+        const total = 40 + (cluster.length - 1) * 12 + 360;
+        wait(t, 1180 + total + 220, () => toast('Chromium × 28 · 指数级增殖完毕', { dur: 1100 }));
+      });
+    }
+
+    /* ============================================================
+       概念④ 数据弹射（飞行距离 ∝ 存储体积）
+       ============================================================ */
+    function playLaunch(t) {
+      const R = rects();
+      const F = fxRect();
+      const gcx = F.cx, gcy = F.cy;
+      const Rmax = Math.max(...R.map(p => Math.hypot(p.x - gcx, p.y - gcy))) * 0.92;
+
+      toast('飞得越远 = 占得越多', { mini: true, dur: 1150, delay: 120 });
+
+      const sorted = APPS.map((app, i) => ({ app, i, size: totalMB(app) }))
+        .sort((a, b) => b.size - a.size);
+
+      sorted.forEach((s, k) => wait(t, 300 + k * 24, () => {
+        const slot = R[s.i];
+        let dx = slot.x - gcx;
+        let dy = slot.y - gcy;
+        let d = Math.hypot(dx, dy);
+        if (d < 10) {
+          const ang = (s.i / APPS.length) * Math.PI * 2;
+          dx = Math.cos(ang);
+          dy = Math.sin(ang);
+          d = 1;
+        }
+        const ux = dx / d, uy = dy / d;
+        const peak = 26 + Math.pow(s.size / MAX_MB, 0.6) * Rmax;
+        const px = gcx + ux * peak - slot.x;
+        const py = gcy + uy * peak - slot.y;
+        const sx = gcx - slot.x;
+        const sy = gcy - slot.y;
+        // 弧线中点（垂直偏移制造弯曲）
+        const mx = (px + 0) / 2 - uy * 16;
+        const my = (py + 0) / 2 + ux * 16;
+        const heavy = s.size / MAX_MB;
+
+        const card = cards[s.i];
+        const a = A(card, [
+          { transform: `translate(${sx}px,${sy}px) scale(0.2)`, opacity: 0 },
+          { transform: `translate(${sx}px,${sy}px) scale(1)`, opacity: 1, offset: 0.1 },
+          { transform: `translate(${px}px,${py}px) scale(${1 + heavy * 0.08})`, offset: 0.45 },
+          { transform: `translate(${mx}px,${my}px) scale(1)`, offset: 0.75 },
+          { transform: `translate(0,0) scale(${1 + heavy * 0.12}, ${1 - heavy * 0.16})`, offset: 0.92 },
+          { transform: 'translate(0,0) scale(1)' }
+        ], { duration: 500 + heavy * 170, easing: 'cubic-bezier(0.25, 0.6, 0.35, 1)', fill: 'forwards' });
+
+        a.addEventListener('finish', () => {
+          card.classList.add('visible');
+          a.cancel();
+          ring(slot.x, slot.y, TYPE_COLOR[s.app.type], 0.6 + heavy * 1.6);
+          tick(s.app);
+        });
+      }));
+
+      const total = 300 + (APPS.length - 1) * 24 + 680;
+      wait(t, total + 200, () => toast(`${(SUM_MB / 1024).toFixed(1)} GB 已各就各位`, { dur: 1000 }));
+    }
+
+    /* ============================================================
+       概念⑤ 群鸟降落（Boids 集群 → 依次归位）
+       ============================================================ */
+    function playBoids(t) {
+      const R = rects();
+      const F = fxRect();
+      const gcx = F.cx, gcy = F.cy;
+      const spawnR = Math.max(F.w, F.h) * 0.62;
+
+      const boids = APPS.map((app, i) => {
+        const a = Math.random() * Math.PI * 2;
+        return {
+          app, i, slot: R[i],
+          x: gcx + Math.cos(a) * spawnR,
+          y: gcy + Math.sin(a) * spawnR,
+          vx: -Math.cos(a) * 3.4,
+          vy: -Math.sin(a) * 3.4,
+          on: false, landed: false,
+          seekAt: 820 + Math.hypot(R[i].x - gcx, R[i].y - gcy) / RmaxB(R) * 420
+        };
+      });
+
+      function RmaxB(rr) { return Math.max(...rr.map(p => Math.hypot(p.x - gcx, p.y - gcy))); }
+
+      boids.forEach((b, k) => wait(t, 160 + k * 14, () => {
+        b.on = true;
+        cards[b.i].classList.add('on');
+      }));
+
+      const t0 = performance.now();
+      let last = t0;
+      let landedCount = 0;
+
+      const land = b => {
+        if (b.landed) return;
+        b.landed = true;
+        landedCount++;
+        const c = cards[b.i];
+        const cur = c.style.transform;
+        c.style.transform = '';
+        A(c, [
+          { transform: (cur || 'none') + ' scale(1,1)' },
+          { transform: 'scale(1.08, 0.88)', offset: 0.45 },
+          { transform: 'scale(1)' }
+        ], { duration: 190, easing: 'ease-out' }).addEventListener('finish', () => c.removeAttribute('style'));
+        tick(b.app);
+      };
+
+      rafLoop(t, now => {
+        const dt = Math.min(32, now - last) / 16.7;
+        last = now;
+        const el = now - t0;
+
+        // 群体质心（未落地者）
+        let cx = 0, cy = 0, n = 0;
+        boids.forEach(b => { if (b.on && !b.landed) { cx += b.x; cy += b.y; n++; } });
+        if (n) { cx /= n; cy /= n; }
+
+        for (const b of boids) {
+          if (!b.on || b.landed) continue;
+          const seeking = el > b.seekAt;
+
+          // 聚集
+          let ax = (cx - b.x) * 0.0026;
+          let ay = (cy - b.y) * 0.0026;
+
+          // 分离 + 对齐
+          let alx = 0, aly = 0, aln = 0;
+          for (const o of boids) {
+            if (o === b || !o.on || o.landed) continue;
+            const ddx = b.x - o.x, ddy = b.y - o.y;
+            const dd = Math.hypot(ddx, ddy);
+            if (dd < 46 && dd > 0.001) {
+              const f = (46 - dd) / 46 * 0.55;
+              ax += ddx / dd * f;
+              ay += ddy / dd * f;
+            }
+            if (dd < 80) { alx += o.vx; aly += o.vy; aln++; }
+          }
+          if (aln) { ax += (alx / aln - b.vx) * 0.045; ay += (aly / aln - b.vy) * 0.045; }
+
+          if (seeking) {
+            // 归位：强目标导向
+            ax += (b.slot.x - b.x) * 0.016 * dt;
+            ay += (b.slot.y - b.y) * 0.016 * dt;
+          } else {
+            // 漩涡：绕中心切向力
+            const tx = -(gcy - b.y), ty = (gcx - b.x);
+            const m = Math.hypot(tx, ty) || 1;
+            ax += tx / m * 0.06 * dt;
+            ay += ty / m * 0.06 * dt;
+            ax += (gcx - b.x) * 0.0009;
+            ay += (gcy - b.y) * 0.0009;
+          }
+
+          b.vx += ax * dt;
+          b.vy += ay * dt;
+
+          // 速度限幅
+          const sp = Math.hypot(b.vx, b.vy) || 0.001;
+          const maxS = seeking ? 7.5 : 6, minS = 1.1;
+          if (sp > maxS) { b.vx = b.vx / sp * maxS; b.vy = b.vy / sp * maxS; }
+          if (sp < minS) { b.vx = b.vx / sp * minS; b.vy = b.vy / sp * minS; }
+
+          b.x += b.vx * dt;
+          b.y += b.vy * dt;
+
+          const dx = b.x - b.slot.x;
+          const dy = b.y - b.slot.y;
+          const dSlot = Math.hypot(dx, dy);
+
+          if (seeking && dSlot < 4) {
+            land(b);
+            continue;
+          }
+
+          const rot = Math.max(-16, Math.min(16, b.vx * 1.6));
+          cards[b.i].style.transform = `translate(${dx}px,${dy}px) rotate(${rot}deg)`;
+        }
+
+        // 硬性收尾：超时强制归位
+        if (el > 3000) {
+          boids.forEach(b => { if (b.on && !b.landed) land(b); });
+        }
+
+        if (landedCount >= boids.length) {
+          wait(t, 300, () => toast('集群已归位', { dur: 1000 }));
+          return false;
+        }
+      });
+    }
+
+    /* ============================================================
+       概念⑥ 复印机扫描线
+       ============================================================ */
+    function playScanline(t) {
+      const R = rects();
+      const F = fxRect();
+
+      const bar = document.createElement('div');
+      bar.className = 'scanline';
+      bar.style.left = '-8%';
+      fx.appendChild(bar);
+
+      const dur = 1100;
+      A(bar, [{ left: '-8%' }, { left: '106%' }], { duration: dur, easing: 'linear', fill: 'forwards' })
+        .addEventListener('finish', () => {
+          A(bar, [{ opacity: 1 }, { opacity: 0 }], { duration: 240, fill: 'forwards' })
+            .addEventListener('finish', () => bar.remove());
+        });
+
+      // 按列揭示：列中心 X 决定被扫到的时刻
+      const colX = [];
+      const colCards = [];
+      for (let c = 0; c < 7; c++) {
+        const pts = R.filter((_, i) => i % 7 === c);
+        colX.push(pts.reduce((s, p) => s + p.x, 0) / pts.length);
+        colCards.push(cards.filter((_, i) => i % 7 === c));
+      }
+
+      colX.forEach((x, c) => {
+        const tc = 60 + dur * (x / F.w) * 0.96;
+        colCards[c].forEach((card, r) => wait(t, tc + r * 45, () => {
+          card.classList.add('visible', 'in-scan');
+          tick(APPS[c + r * 7]);
+        }));
+      });
+
+      wait(t, dur + 420, () => toast('扫描完毕 · 35 个应用', { dur: 900 }));
+    }
+
+    /* ============================================================
+       概念注册与切换
+       ============================================================ */
+    const CONCEPTS = [
+      {
+        id: 'tabs', label: '① 标签页瀑布', play: playTabs,
+        tagline: '每个 Electron 应用，都只是一枚获得自主意识的 Chrome 标签',
+        points: [
+          '名字双关的兑现时刻：狂按 ⌘T 的标签条被挤爆，标签跌落、翻滚、变形为应用图标落入网格',
+          'SwiftUI 落地杀手锏：matchedGeometryEffect 天生就是做「标签 → 图标」变形的',
+          '风险：Chrome 视觉语言需要克制处理——只保留标签剪影，配色融入现有主题'
+        ],
+        meta: ['时长 ≈ 2.2s', 'SwiftUI 移植 中', '新奇度 ★★★★★']
+      },
+      {
+        id: 'radar', label: '② 雷达扫描', play: playRadar,
+        tagline: '应用本质是检测器——扫描即加载，涟漪半径即体积',
+        points: [
+          '光束按角度扫过槽位、原地 ping 出图标：从结构上根治了「中心堆叠」的视觉混乱',
+          '信息编码：涟漪半径与应用体积成正比，Docker 的回波明显重于 Espanso',
+          '将来可绑定真实扫描进度——加载动画即进度反馈本身；SwiftUI 用 RotationEffect + AngularGradient 最易移植'
+        ],
+        meta: ['时长 ≈ 1.9s', 'SwiftUI 移植 低', '新奇度 ★★★★']
+      },
+      {
+        id: 'mitosis', label: '③ 有丝分裂', play: playMitosis,
+        tagline: '动画即论点：1 → 2 → 4 → 8 → … → 28，你在硬盘里养了 28 份同一引擎',
+        points: [
+          'Chromium 原子徽标先落场，指数分裂节奏越来越快，五代表后挤成一团，再散开归位',
+          '指数增长的加速节奏天然把总时长压在 2 秒左右，没有冗长感',
+          'SwiftUI 用 KeyframeAnimator 编排代际节拍；风险：节拍不干脆会糊成一锅粥'
+        ],
+        meta: ['时长 ≈ 2.0s', 'SwiftUI 移植 中', '新奇度 ★★★★★']
+      },
+      {
+        id: 'launch', label: '④ 数据弹射', play: playLaunch,
+        tagline: '动画即信息：飞行距离 ∝ 存储体积，飞得越远，占得越多',
+        points: [
+          '所有图标从中心一点爆发射出，Docker Desktop 冲得最远，落点带深度压缩与冲击涟漪',
+          '体积最大的先发射、砸得最重——加载过程同时在预告排行榜',
+          'SwiftUI 用关键帧 + spring 即可；需要一句图例微文案帮观众解码距离含义'
+        ],
+        meta: ['时长 ≈ 1.8s', 'SwiftUI 移植 中', '新奇度 ★★★★']
+      },
+      {
+        id: 'boids', label: '⑤ 群鸟降落', play: playBoids,
+        tagline: '35 只图标鸟先绕中心形成活的漩涡，再逐个脱离集群归位',
+        points: [
+          'Boids 群体智能（聚集 / 分离 / 对齐 + 漩涡切向力）：最「活」、wow 系数最高的方案',
+          '归位按槽位离中心的距离分层激活，落位像涟漪一样从中心扩散',
+          '风险：调参成本最高、与产品语义关联最弱；SwiftUI 需要自写模拟，移植最难'
+        ],
+        meta: ['时长 ≈ 2.6s', 'SwiftUI 移植 高', '新奇度 ★★★★★']
+      },
+      {
+        id: 'scanline', label: '⑥ 复印机扫描线', play: playScanline,
+        tagline: '诚实、冷静、绝对稳的兜底方案——光条扫过，图标逐列去模糊显现',
+        points: [
+          '复印机式进度感：扫到哪一列、哪一列亮起，节奏与「扫描磁盘」的叙事完全一致',
+          '实现最简单、最不容易出 bug，适合作为正式版的保守选项',
+          '新奇度为零——列在这里是为了给对比一个「克制」的锚点'
+        ],
+        meta: ['时长 ≈ 1.4s', 'SwiftUI 移植 低', '新奇度 ★★']
+      }
+    ];
+
+    const tabsEl = document.getElementById('conceptTabs');
+    const cardEl = document.getElementById('conceptCard');
+    let cur = 0;
+
+    CONCEPTS.forEach((c, i) => {
+      const b = document.createElement('button');
+      b.className = 'concept-tab';
+      b.textContent = c.label;
+      b.addEventListener('click', () => switchConcept(i));
+      tabsEl.appendChild(b);
+    });
+
+    function renderDesc() {
+      const c = CONCEPTS[cur];
+      document.getElementById('tbConcept').textContent = c.label;
+      cardEl.innerHTML = `
+        <div class="cc-main">
+          <div class="cc-tagline">${c.tagline}</div>
+          <ul class="cc-points">${c.points.map(p => `<li>${p}</li>`).join('')}</ul>
+        </div>
+        <div class="cc-meta">
+          ${c.meta.map((m, k) => `<span class="cc-chip${k === 0 ? ' hl' : ''}">${m}</span>`).join('')}
+        </div>
+      `;
+      [...tabsEl.children].forEach((b, i) => b.classList.toggle('active', i === cur));
+    }
+
+    function play() {
+      const t = ++state.token;
+      if (reduced()) { instantAll(); return; }
+      CONCEPTS[cur].play(t);
+    }
+
+    function switchConcept(i) {
+      cur = i;
+      resetStage();
+      renderDesc();
+      wait(state.token, 380, play);
+    }
+
+    document.getElementById('replayBtn').addEventListener('click', () => {
+      resetStage();
+      wait(state.token, 140, play);
+    });
+
+    document.addEventListener('keydown', e => {
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      if (e.key >= '1' && e.key <= '6') switchConcept(+e.key - 1);
+      if (e.key === 'r' || e.key === 'R') {
+        resetStage();
+        wait(state.token, 140, play);
+      }
+    });
+
+    renderDesc();
+    wait(state.token, 500, play);
+  </script>
+</body>
+</html>

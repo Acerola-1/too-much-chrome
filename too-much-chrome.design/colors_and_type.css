@@ -1,0 +1,76 @@
+/* ============================================================
+   Too Much Chrome — Apple 浅色毛玻璃风格设计令牌
+   ============================================================ */
+
+:root {
+  /* ---------- 品牌前缀语义令牌 ---------- */
+  --tmc-background: #f5f5f7;          /* 页面背景：淡灰色 */
+  --tmc-foreground: #1d1d1f;          /* 主要文字：深灰色 */
+  --tmc-card: rgba(255, 255, 255, 0.72);  /* 毛玻璃卡片 */
+  --tmc-card-foreground: #1d1d1f;
+  --tmc-popover: rgba(255, 255, 255, 0.82);
+  --tmc-popover-foreground: #1d1d1f;
+  --tmc-primary: #007aff;             /* 苹果蓝 */
+  --tmc-primary-foreground: #ffffff;
+  --tmc-secondary: rgba(0, 122, 255, 0.12);
+  --tmc-secondary-foreground: #007aff;
+  --tmc-muted: rgba(0, 0, 0, 0.05);
+  --tmc-muted-foreground: #86868b;
+  --tmc-accent: rgba(0, 122, 255, 0.08);
+  --tmc-accent-foreground: #007aff;
+  --tmc-destructive: #ff3b30;
+  --tmc-destructive-foreground: #ffffff;
+  --tmc-border: rgba(0, 0, 0, 0.08);
+  --tmc-input: rgba(0, 0, 0, 0.06);
+  --tmc-ring: #007aff;
+
+  /* ---------- 图表令牌 ---------- */
+  --tmc-chart-donut-track: rgba(0, 0, 0, 0.06);  /* 环形图/条形图轨道底色 */
+
+  /* ---------- 版本健康状态令牌 ---------- */
+  --tmc-status-good: #34c759;       /* 版本较新（绿） */
+  --tmc-status-warn: #ff9f0a;       /* 建议更新（黄） */
+  --tmc-status-bad: #ff3b30;        /* 版本老旧（红） */
+  --tmc-status-unknown: #aeaeb2;    /* 未知版本（灰） */
+
+  /* ---------- 圆角五档 ---------- */
+  --tmc-radius-xs: 6px;
+  --tmc-radius-sm: 8px;
+  --tmc-radius-md: 10px;
+  --tmc-radius-lg: 14px;
+  --tmc-radius-xl: 18px;
+
+  /* ---------- 字体 ---------- */
+  --tmc-font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", "PingFang SC", "Microsoft YaHei", sans-serif;
+
+  /* ---------- 毛玻璃 ---------- */
+  --tmc-glass-blur: 24px;
+  --tmc-glass-saturate: 1.8;
+
+  /* ---------- 类型颜色 ---------- */
+  --tmc-electron: #007aff;
+  --tmc-electron-light: #5ac8fa;
+  --tmc-tauri: #8b5cf6;
+  --tmc-tauri-light: #c4b5fd;
+  --tmc-wails: #06b6d4;
+  --tmc-wails-light: #67e8f9;
+}
+
+/* ---------- 暗色主题覆盖 ---------- */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --tmc-background: #1c1c1e;
+    --tmc-foreground: #f5f5f7;
+    --tmc-card: rgba(44, 44, 46, 0.72);
+    --tmc-card-foreground: #f5f5f7;
+    --tmc-popover: rgba(44, 44, 46, 0.86);
+    --tmc-popover-foreground: #f5f5f7;
+    --tmc-secondary: rgba(10, 132, 255, 0.22);
+    --tmc-muted: rgba(255, 255, 255, 0.08);
+    --tmc-muted-foreground: #98989d;
+    --tmc-accent: rgba(10, 132, 255, 0.16);
+    --tmc-border: rgba(255, 255, 255, 0.12);
+    --tmc-input: rgba(255, 255, 255, 0.10);
+    --tmc-chart-donut-track: rgba(255, 255, 255, 0.10);
+  }
+}

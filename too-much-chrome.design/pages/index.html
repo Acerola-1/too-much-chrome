@@ -1,0 +1,1844 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Too Much Chrome</title>
+  <style>
+    /* ============================================================
+       Too Much Chrome — Apple 原生质感设计令牌
+       浅色毛玻璃为默认主题，暗色主题通过 prefers-color-scheme 覆盖
+       ============================================================ */
+    :root {
+      /* ---------- 品牌前缀语义令牌 ---------- */
+      --tmc-background: #f5f5f7;
+      --tmc-foreground: #1d1d1f;
+      --tmc-card: rgba(255, 255, 255, 0.72);
+      --tmc-card-foreground: #1d1d1f;
+      --tmc-popover: rgba(255, 255, 255, 0.86);
+      --tmc-popover-foreground: #1d1d1f;
+      --tmc-primary: #007aff;
+      --tmc-primary-foreground: #ffffff;
+      --tmc-secondary: rgba(0, 122, 255, 0.12);
+      --tmc-secondary-foreground: #007aff;
+      --tmc-muted: rgba(0, 0, 0, 0.05);
+      --tmc-muted-foreground: #86868b;
+      --tmc-accent: rgba(0, 122, 255, 0.08);
+      --tmc-accent-foreground: #007aff;
+      --tmc-destructive: #ff3b30;
+      --tmc-destructive-foreground: #ffffff;
+      --tmc-border: rgba(0, 0, 0, 0.08);
+      --tmc-input: rgba(0, 0, 0, 0.06);
+      --tmc-ring: #007aff;
+
+      /* ---------- 图表令牌 ---------- */
+      --tmc-chart-donut-track: rgba(0, 0, 0, 0.06);
+
+      /* ---------- 版本健康状态令牌 ---------- */
+      --tmc-status-good: #34c759;
+      --tmc-status-warn: #ff9f0a;
+      --tmc-status-bad: #ff3b30;
+      --tmc-status-unknown: #aeaeb2;
+
+      /* ---------- 圆角五档 ---------- */
+      --tmc-radius-xs: 6px;
+      --tmc-radius-sm: 8px;
+      --tmc-radius-md: 10px;
+      --tmc-radius-lg: 14px;
+      --tmc-radius-xl: 18px;
+
+      /* ---------- 字体 ---------- */
+      --tmc-font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text",
+        "Helvetica Neue", "PingFang SC", "Microsoft YaHei", sans-serif;
+
+      /* ---------- 毛玻璃 ---------- */
+      --tmc-glass-blur: 24px;
+      --tmc-glass-saturate: 1.8;
+
+      /* ---------- 类型颜色 ---------- */
+      --tmc-electron: #007aff;
+      --tmc-electron-light: #5ac8fa;
+      --tmc-tauri: #8b5cf6;
+      --tmc-tauri-light: #c4b5fd;
+      --tmc-wails: #06b6d4;
+      --tmc-wails-light: #67e8f9;
+
+      /* ---------- 图标尺寸 ---------- */
+      --tmc-icon-size: 56px;
+    }
+
+    /* ---------- 暗色主题覆盖 ---------- */
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --tmc-background: #1c1c1e;
+        --tmc-foreground: #f5f5f7;
+        --tmc-card: rgba(44, 44, 46, 0.72);
+        --tmc-card-foreground: #f5f5f7;
+        --tmc-popover: rgba(44, 44, 46, 0.86);
+        --tmc-popover-foreground: #f5f5f7;
+        --tmc-secondary: rgba(10, 132, 255, 0.22);
+        --tmc-muted: rgba(255, 255, 255, 0.08);
+        --tmc-muted-foreground: #98989d;
+        --tmc-accent: rgba(10, 132, 255, 0.16);
+        --tmc-border: rgba(255, 255, 255, 0.12);
+        --tmc-input: rgba(255, 255, 255, 0.10);
+        --tmc-chart-donut-track: rgba(255, 255, 255, 0.10);
+      }
+    }
+
+    /* ============================================================
+       基础重置
+       ============================================================ */
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      font-family: var(--tmc-font-sans);
+      background: var(--tmc-background);
+      color: var(--tmc-foreground);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      overflow: hidden;
+    }
+
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+
+    button {
+      font-family: inherit;
+    }
+
+    /* ============================================================
+       主窗口容器
+       ============================================================ */
+    .app-window {
+      position: relative;
+      width: 1160px;
+      height: 720px;
+      background: var(--tmc-background);
+      border-radius: var(--tmc-radius-xl);
+      box-shadow:
+        0 30px 80px rgba(0, 0, 0, 0.12),
+        0 10px 30px rgba(0, 0, 0, 0.08),
+        0 0 0 1px rgba(0, 0, 0, 0.06);
+      overflow: hidden;
+    }
+
+    /* ============================================================
+       顶部工具栏
+       ============================================================ */
+    .toolbar {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 64px;
+      padding: 0 24px;
+      background: var(--tmc-card);
+      backdrop-filter: blur(var(--tmc-glass-blur)) saturate(var(--tmc-glass-saturate));
+      -webkit-backdrop-filter: blur(var(--tmc-glass-blur)) saturate(var(--tmc-glass-saturate));
+      border-bottom: 1px solid var(--tmc-border);
+    }
+
+    /* ---------- macOS 红绿灯窗口控制按钮（原型中为装饰性） ---------- */
+    .traffic-lights {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-right: 18px;
+      flex: none;
+    }
+
+    .traffic-btn {
+      position: relative;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      border: 0.5px solid rgba(0, 0, 0, 0.12);
+      cursor: default;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* 玻璃光泽：让圆点更接近真实 macOS 红绿灯 */
+    .traffic-btn::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0.06) 48%, rgba(0, 0, 0, 0.05));
+      pointer-events: none;
+    }
+
+    .traffic-btn.close { background: #ff5f57; }
+    .traffic-btn.minimize { background: #febc2e; }
+    .traffic-btn.zoom { background: #28c840; }
+
+    /* 悬停时显示系统风格的操控符号 */
+    .traffic-btn::after {
+      content: attr(data-glyph);
+      font-size: 9px;
+      font-weight: 700;
+      line-height: 1;
+      color: rgba(0, 0, 0, 0.55);
+      opacity: 0;
+      transition: opacity 0.12s ease;
+    }
+
+    .traffic-lights:hover .traffic-btn::after {
+      opacity: 1;
+    }
+
+    .toolbar-left {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 190px;
+    }
+
+    .toolbar-title {
+      font-size: 17px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      color: var(--tmc-foreground);
+    }
+
+    .toolbar-subtitle {
+      font-size: 12px;
+      color: var(--tmc-muted-foreground);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .toolbar-center {
+      display: flex;
+      align-items: center;
+    }
+
+    .filter-segment {
+      display: flex;
+      background: var(--tmc-muted);
+      border-radius: 999px;
+      padding: 3px;
+    }
+
+    .filter-btn {
+      padding: 6px 18px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--tmc-foreground);
+      background: transparent;
+      border: none;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .filter-btn:hover {
+      color: var(--tmc-primary);
+    }
+
+    .filter-btn.active {
+      background: var(--tmc-primary);
+      color: var(--tmc-primary-foreground);
+      box-shadow: 0 1px 3px rgba(0, 122, 255, 0.3);
+    }
+
+    .toolbar-right {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      min-width: 220px;
+    }
+
+    .replay-btn {
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--tmc-card);
+      border: 1px solid var(--tmc-border);
+      border-radius: 50%;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      backdrop-filter: blur(var(--tmc-glass-blur)) saturate(var(--tmc-glass-saturate));
+      -webkit-backdrop-filter: blur(var(--tmc-glass-blur)) saturate(var(--tmc-glass-saturate));
+    }
+
+    .replay-btn:hover {
+      background: var(--tmc-primary);
+      border-color: var(--tmc-primary);
+      transform: scale(1.05);
+    }
+
+    .replay-btn:hover svg {
+      stroke: #fff;
+    }
+
+    .replay-btn:active {
+      transform: scale(0.95);
+    }
+
+    .replay-btn.spinning svg {
+      animation: spin 0.6s ease-in-out;
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    .replay-btn svg {
+      width: 18px;
+      height: 18px;
+      stroke: var(--tmc-foreground);
+      stroke-width: 2;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      transition: stroke 0.2s ease;
+    }
+
+    /* ============================================================
+       主内容区域
+       ============================================================ */
+    .main-content {
+      position: relative;
+      width: 100%;
+      height: calc(100% - 64px);
+      display: flex;
+    }
+
+    /* ============================================================
+       图标网格区域
+       ============================================================ */
+    .icon-grid-container {
+      flex: 1;
+      padding: 32px 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .icon-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      grid-template-rows: repeat(5, 1fr);
+      gap: 14px 16px;
+      width: 100%;
+      max-width: 680px;
+      position: relative;
+    }
+
+    /* 单个图标卡片 */
+    .icon-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      transition: transform 0.2s ease, filter 0.2s ease, opacity 0.25s ease;
+      position: relative;
+      opacity: 0;
+      border: none;
+      background: none;
+      padding: 4px 2px;
+      border-radius: var(--tmc-radius-lg);
+    }
+
+    .icon-card:focus-visible {
+      outline: 2px solid var(--tmc-ring);
+      outline-offset: 2px;
+    }
+
+    .icon-card.visible {
+      opacity: 1;
+    }
+
+    .icon-card:hover {
+      transform: translateY(-4px) scale(1.02);
+      filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.12));
+    }
+
+    .icon-card:active {
+      transform: scale(0.95);
+    }
+
+    .icon-card.filtered-out {
+      opacity: 0.14;
+      pointer-events: none;
+    }
+
+    .icon-card.linked {
+      filter: drop-shadow(0 0 0 transparent);
+      background: var(--tmc-accent);
+    }
+
+    /* 图标本体 */
+    .app-icon {
+      width: var(--tmc-icon-size);
+      height: var(--tmc-icon-size);
+      border-radius: 13px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: -0.02em;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.12);
+      box-shadow:
+        0 4px 12px rgba(0, 0, 0, 0.10),
+        0 1px 3px rgba(0, 0, 0, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.22);
+      position: relative;
+      overflow: hidden;
+      flex: none;
+    }
+
+    .app-icon::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 50%;
+      background: linear-gradient(to bottom, rgba(255, 255, 255, 0.25), rgba(255, 255, 255, 0));
+      pointer-events: none;
+    }
+
+    .app-icon.electron { background: linear-gradient(135deg, var(--tmc-electron-light), var(--tmc-electron)); }
+    .app-icon.tauri { background: linear-gradient(135deg, var(--tmc-tauri-light), var(--tmc-tauri)); }
+    .app-icon.wails { background: linear-gradient(135deg, var(--tmc-wails-light), var(--tmc-wails)); }
+
+    /* 图标包裹层：仅该层参与果冻缩放，应用名/体积文本保持清晰 */
+    .icon-wrap {
+      position: relative;
+      display: block;
+    }
+
+    /* 版本健康状态角标 */
+    .status-dot {
+      position: absolute;
+      right: -3px;
+      bottom: -3px;
+      width: 13px;
+      height: 13px;
+      border-radius: 50%;
+      border: 2px solid var(--tmc-background);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
+      z-index: 2;
+    }
+
+    .status-dot.current { background: var(--tmc-status-good); }
+    .status-dot.ok { background: var(--tmc-status-good); }
+    .status-dot.aging { background: var(--tmc-status-warn); }
+    .status-dot.outdated { background: var(--tmc-status-bad); }
+    .status-dot.unknown { background: var(--tmc-status-unknown); }
+
+    /* 应用名称与存储大小 */
+    .app-name {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--tmc-foreground);
+      text-align: center;
+      line-height: 1.25;
+      max-width: 80px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .app-size {
+      font-size: 10px;
+      color: var(--tmc-muted-foreground);
+      font-variant-numeric: tabular-nums;
+      line-height: 1;
+    }
+
+    /* ============================================================
+       开场动画 - 复印机扫描线（已选定方案）
+       一条带辉光的细光条从左到右线性扫过图标网格；
+       被扫中的列依次"去模糊"显现（blur 10px→0 + 轻微上浮回正），
+       每列被扫中的时刻由该列中心 X 位置解析确定，列内逐个 45ms 错开。
+       ============================================================ */
+    @keyframes inScan {
+      0%   { opacity: 0; filter: blur(10px); transform: translateY(5px) scale(0.96); }
+      100% { opacity: 1; filter: blur(0);   transform: none; }
+    }
+
+    .icon-card.in-scan {
+      animation: inScan 0.3s cubic-bezier(0.25, 0.6, 0.35, 1) both;
+    }
+
+    /* 扫描线：由 JS 挂载进 .icon-grid（position: relative）做绝对定位扫过 */
+    .scanline {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: -8%;
+      width: 64px;
+      margin-left: -32px;
+      z-index: 3;
+      pointer-events: none;
+      background: linear-gradient(90deg,
+        rgba(0, 122, 255, 0) 0%,
+        rgba(0, 122, 255, 0.05) 55%,
+        rgba(0, 122, 255, 0.14) 90%,
+        rgba(90, 200, 250, 0.5) 99%,
+        rgba(0, 122, 255, 0) 100%);
+    }
+
+    /* 光条右缘的 2px 发光亮边 */
+    .scanline::after {
+      content: '';
+      position: absolute;
+      right: 3px;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      border-radius: 2px;
+      background: rgba(120, 195, 255, 0.85);
+      box-shadow: 0 0 12px rgba(0, 122, 255, 0.6);
+    }
+
+    .scanline.sweeping {
+      animation: scanSweep 1.1s linear forwards;
+    }
+
+    @keyframes scanSweep {
+      0%   { left: -8%;  opacity: 1; }
+      99%  { opacity: 1; }
+      100% { left: 104%; opacity: 0; }
+    }
+
+    /* ============================================================
+       右侧报告面板
+       ============================================================ */
+    .stats-panel {
+      flex: none;
+      width: 0;
+      overflow: hidden;
+      background: var(--tmc-card);
+      backdrop-filter: blur(var(--tmc-glass-blur)) saturate(var(--tmc-glass-saturate));
+      -webkit-backdrop-filter: blur(var(--tmc-glass-blur)) saturate(var(--tmc-glass-saturate));
+      border-left: 1px solid var(--tmc-border);
+      opacity: 0;
+      transition:
+        width 0.55s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+        opacity 0.4s ease;
+      z-index: 5;
+    }
+
+    .stats-panel.visible {
+      width: 368px;
+      opacity: 1;
+    }
+
+    .stats-scroll {
+      height: 100%;
+      overflow-y: auto;
+      padding: 24px 22px 28px;
+      width: 368px;
+    }
+
+    .stats-scroll::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .stats-scroll::-webkit-scrollbar-thumb {
+      background: var(--tmc-muted);
+      border-radius: 999px;
+    }
+
+    .stats-section {
+      margin-bottom: 22px;
+    }
+
+    .stats-section:last-child {
+      margin-bottom: 0;
+    }
+
+    .stats-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--tmc-muted-foreground);
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    /* 大号数字 */
+    .stats-total {
+      font-size: 48px;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      line-height: 1;
+      color: var(--tmc-foreground);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .stats-total-unit {
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--tmc-muted-foreground);
+      margin-left: 4px;
+    }
+
+    .stats-subtitle {
+      font-size: 12px;
+      color: var(--tmc-muted-foreground);
+      margin-top: 4px;
+    }
+
+    .stats-divider {
+      height: 1px;
+      background: var(--tmc-border);
+      margin: 18px 0;
+    }
+
+    /* 统计行 */
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 6px;
+    }
+
+    .stat-row-label {
+      font-size: 13px;
+      color: var(--tmc-foreground);
+    }
+
+    .stat-row-value {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--tmc-foreground);
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* 堆叠条（应用本体 vs 用户数据） */
+    .stacked-bar {
+      display: flex;
+      height: 8px;
+      border-radius: 999px;
+      overflow: hidden;
+      background: var(--tmc-chart-donut-track);
+      margin: 10px 0 8px;
+    }
+
+    .stacked-bar .seg {
+      height: 100%;
+      width: 0;
+      transition: width 1s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+
+    .seg.body-seg {
+      background: linear-gradient(90deg, var(--tmc-electron-light), var(--tmc-electron));
+    }
+
+    .seg.data-seg {
+      background: var(--tmc-chart-donut-track);
+    }
+
+    .stacked-legend {
+      display: flex;
+      gap: 14px;
+      font-size: 11px;
+      color: var(--tmc-muted-foreground);
+    }
+
+    .legend-dot {
+      display: inline-block;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      margin-right: 5px;
+      vertical-align: 1px;
+    }
+
+    .legend-dot.body { background: var(--tmc-electron); }
+    .legend-dot.data { background: var(--tmc-status-unknown); }
+
+    /* 数字更新时的翻入动画（纯视觉润色，不承载信息） */
+    @keyframes numPop {
+      from { opacity: 0.2; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .num-pop {
+      animation: numPop 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+      display: inline-block;
+    }
+
+    /* ---------- 环形占比图 ---------- */
+    .donut-row {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      margin-top: 12px;
+    }
+
+    .donut-wrap {
+      position: relative;
+      width: 112px;
+      height: 112px;
+      flex: none;
+    }
+
+    .donut-svg {
+      width: 112px;
+      height: 112px;
+      transform: rotate(-90deg);
+    }
+
+    .donut-seg {
+      transition: stroke-dasharray 1s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+
+    .donut-center {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+    }
+
+    .donut-center-num {
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1;
+      color: var(--tmc-foreground);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .donut-center-label {
+      font-size: 10px;
+      color: var(--tmc-muted-foreground);
+      margin-top: 3px;
+    }
+
+    .donut-legend {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .donut-legend-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+    }
+
+    .donut-legend-name {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-weight: 500;
+      color: var(--tmc-foreground);
+    }
+
+    .donut-legend-value {
+      color: var(--tmc-muted-foreground);
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+
+    /* ---------- 存储排行 ---------- */
+    .rank-list {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin-top: 8px;
+    }
+
+    .rank-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 7px 8px;
+      border-radius: var(--tmc-radius-md);
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      text-align: left;
+      transition: background 0.18s ease;
+      width: 100%;
+    }
+
+    .rank-row:hover,
+    .rank-row.linked {
+      background: var(--tmc-accent);
+    }
+
+    .rank-row:focus-visible {
+      outline: 2px solid var(--tmc-ring);
+      outline-offset: 1px;
+    }
+
+    .rank-icon {
+      width: 30px;
+      height: 30px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+      color: #fff;
+      flex: none;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    }
+
+    .rank-icon.electron { background: linear-gradient(135deg, var(--tmc-electron-light), var(--tmc-electron)); }
+    .rank-icon.tauri { background: linear-gradient(135deg, var(--tmc-tauri-light), var(--tmc-tauri)); }
+    .rank-icon.wails { background: linear-gradient(135deg, var(--tmc-wails-light), var(--tmc-wails)); }
+
+    .rank-main {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .rank-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 8px;
+    }
+
+    .rank-name {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--tmc-foreground);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .rank-total {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--tmc-muted-foreground);
+      font-variant-numeric: tabular-nums;
+      flex: none;
+    }
+
+    .rank-bar {
+      display: flex;
+      height: 5px;
+      border-radius: 999px;
+      overflow: hidden;
+      background: var(--tmc-chart-donut-track);
+    }
+
+    .rank-bar .seg {
+      height: 100%;
+      width: 0;
+      transition: width 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+
+    .rank-row.electron .seg.body-seg { background: var(--tmc-electron); }
+    .rank-row.tauri .seg.body-seg { background: var(--tmc-tauri); }
+    .rank-row.wails .seg.body-seg { background: var(--tmc-wails); }
+    .rank-bar .seg.data-seg { background: var(--tmc-status-unknown); }
+
+    /* ---------- 版本健康度 ---------- */
+    .health-list {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      margin-top: 10px;
+    }
+
+    .health-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+    }
+
+    .health-name {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      color: var(--tmc-foreground);
+    }
+
+    .health-count {
+      font-weight: 600;
+      color: var(--tmc-muted-foreground);
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* ============================================================
+       应用详情弹层
+       ============================================================ */
+    .popover-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 40;
+      display: none;
+    }
+
+    .popover-overlay.open {
+      display: block;
+    }
+
+    .app-popover {
+      position: absolute;
+      z-index: 50;
+      width: 300px;
+      background: var(--tmc-popover);
+      backdrop-filter: blur(var(--tmc-glass-blur)) saturate(var(--tmc-glass-saturate));
+      -webkit-backdrop-filter: blur(var(--tmc-glass-blur)) saturate(var(--tmc-glass-saturate));
+      border: 1px solid var(--tmc-border);
+      border-radius: var(--tmc-radius-lg);
+      box-shadow:
+        0 20px 50px rgba(0, 0, 0, 0.16),
+        0 4px 14px rgba(0, 0, 0, 0.08);
+      padding: 16px;
+      color: var(--tmc-popover-foreground);
+      opacity: 0;
+      transform: translateY(6px) scale(0.96);
+      transition: opacity 0.22s ease, transform 0.22s cubic-bezier(0.34, 1.3, 0.64, 1);
+      pointer-events: none;
+    }
+
+    .app-popover.open {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      pointer-events: auto;
+    }
+
+    .popover-head {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .popover-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      font-weight: 700;
+      color: #fff;
+      flex: none;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    }
+
+    .popover-icon.electron { background: linear-gradient(135deg, var(--tmc-electron-light), var(--tmc-electron)); }
+    .popover-icon.tauri { background: linear-gradient(135deg, var(--tmc-tauri-light), var(--tmc-tauri)); }
+    .popover-icon.wails { background: linear-gradient(135deg, var(--tmc-wails-light), var(--tmc-wails)); }
+
+    .popover-title-block {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .popover-name {
+      font-size: 14px;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .popover-badges {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 3px;
+    }
+
+    .badge {
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 7px;
+      border-radius: 999px;
+      background: var(--tmc-muted);
+      color: var(--tmc-muted-foreground);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .badge.type.electron { background: var(--tmc-secondary); color: var(--tmc-electron); }
+    .badge.type.tauri { background: rgba(139, 92, 246, 0.14); color: var(--tmc-tauri); }
+    .badge.type.wails { background: rgba(6, 182, 212, 0.14); color: var(--tmc-wails); }
+
+    .badge.status.current { background: rgba(52, 199, 89, 0.14); color: var(--tmc-status-good); }
+    .badge.status.ok { background: rgba(52, 199, 89, 0.14); color: var(--tmc-status-good); }
+    .badge.status.aging { background: rgba(255, 159, 10, 0.16); color: var(--tmc-status-warn); }
+    .badge.status.outdated { background: rgba(255, 59, 48, 0.14); color: var(--tmc-status-bad); }
+    .badge.status.unknown { background: var(--tmc-muted); color: var(--tmc-status-unknown); }
+
+    .popover-close {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      border: none;
+      background: var(--tmc-muted);
+      color: var(--tmc-muted-foreground);
+      font-size: 13px;
+      line-height: 1;
+      cursor: pointer;
+      flex: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.18s ease;
+    }
+
+    .popover-close:hover {
+      background: var(--tmc-input);
+    }
+
+    .popover-section {
+      margin-top: 12px;
+    }
+
+    .popover-section-label {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--tmc-muted-foreground);
+      margin-bottom: 6px;
+    }
+
+    .popover-total {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      font-variant-numeric: tabular-nums;
+      margin-bottom: 2px;
+    }
+
+    .popover-breakdown-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      margin-top: 6px;
+    }
+
+    .popover-breakdown-row .k {
+      color: var(--tmc-muted-foreground);
+    }
+
+    .popover-breakdown-row .v {
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .popover-path {
+      font-size: 11px;
+      color: var(--tmc-muted-foreground);
+      font-family: ui-monospace, "SF Mono", Menlo, monospace;
+      word-break: break-all;
+      line-height: 1.45;
+    }
+
+    /* ============================================================
+       减少动效降级
+       ============================================================ */
+    @media (prefers-reduced-motion: reduce) {
+      .icon-card {
+        opacity: 1;
+      }
+
+      .icon-card.in-scan {
+        animation: none;
+      }
+
+      .scanline,
+      .scanline.sweeping {
+        display: none;
+      }
+
+      .stats-panel,
+      .stacked-bar .seg,
+      .rank-bar .seg,
+      .donut-seg,
+      .app-popover {
+        transition: none;
+      }
+
+      .filter-btn,
+      .replay-btn,
+      .rank-row,
+      .icon-card,
+      .num-pop {
+        transition: none;
+        animation: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-window" id="appWindow">
+    <!-- 顶部工具栏 -->
+    <header class="toolbar">
+      <!-- macOS 红绿灯窗口控制按钮 -->
+      <div class="traffic-lights">
+        <button class="traffic-btn close" data-glyph="×" title="关闭"></button>
+        <button class="traffic-btn minimize" data-glyph="−" title="最小化"></button>
+        <button class="traffic-btn zoom" data-glyph="+" title="缩放"></button>
+      </div>
+
+      <div class="toolbar-left">
+        <div class="toolbar-title">Too Much Chrome</div>
+        <div class="toolbar-subtitle" id="scanCount">已扫描 35 个应用 · 14.2 GB</div>
+      </div>
+
+      <div class="toolbar-center">
+        <div class="filter-segment" id="filterSegment">
+          <button class="filter-btn active" data-filter="all" data-dom-id="filter-all" id="filter-all">全部</button>
+          <button class="filter-btn" data-filter="electron" data-dom-id="filter-electron" id="filter-electron">Electron</button>
+          <button class="filter-btn" data-filter="tauri" data-dom-id="filter-tauri" id="filter-tauri">Tauri</button>
+          <button class="filter-btn" data-filter="wails" data-dom-id="filter-wails" id="filter-wails">Wails</button>
+        </div>
+      </div>
+
+      <div class="toolbar-right">
+        <button class="replay-btn" id="replayBtn" data-dom-id="replay-btn" title="重新扫描动画">
+          <svg viewBox="0 0 24 24">
+            <path d="M23 4v6h-6" />
+            <path d="M1 20v-6h6" />
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10" />
+            <path d="M20.49 15a9 9 0 0 1-14.85 3.36L1 14" />
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- 主内容区域 -->
+    <main class="main-content">
+      <!-- 图标网格区域 -->
+      <div class="icon-grid-container" id="gridContainer">
+        <div class="icon-grid" id="iconGrid">
+          <!-- 图标通过 JavaScript 动态生成；扫描线开场时由 JS 挂载 -->
+        </div>
+      </div>
+
+      <!-- 右侧分析报告面板 -->
+      <aside class="stats-panel" id="statsPanel">
+        <div class="stats-scroll">
+          <!-- 概览：总应用数 -->
+          <div class="stats-section">
+            <div class="stats-label">总应用数</div>
+            <div class="stats-total"><span id="totalCount">0</span><span class="stats-total-unit">个</span></div>
+            <div class="stats-subtitle">基于 WebView / Chromium 的 macOS 应用</div>
+          </div>
+
+          <div class="stats-divider"></div>
+
+          <!-- 存储占用：本体 vs 用户数据 -->
+          <div class="stats-section">
+            <div class="stats-label">存储占用</div>
+            <div class="stat-row">
+              <span class="stat-row-label">合计</span>
+              <span class="stat-row-value" id="storageTotal">0 GB</span>
+            </div>
+            <div class="stacked-bar" id="storageStackedBar">
+              <div class="seg body-seg" id="segBody"></div>
+              <div class="seg data-seg" id="segData"></div>
+            </div>
+            <div class="stacked-legend">
+              <span><span class="legend-dot body"></span>应用本体 <span id="bodyTotal">0</span></span>
+              <span><span class="legend-dot data"></span>用户数据 <span id="dataTotal">0</span></span>
+            </div>
+          </div>
+
+          <div class="stats-divider" id="donutDivider"></div>
+
+          <!-- 类型分布环形图（仅“全部”过滤下展示） -->
+          <div class="stats-section" id="donutSection">
+            <div class="stats-label">类型分布</div>
+            <div class="donut-row">
+              <div class="donut-wrap">
+                <svg class="donut-svg" viewBox="0 0 112 112" id="donutChart">
+                  <circle cx="56" cy="56" r="46" fill="none" stroke="var(--tmc-chart-donut-track)" stroke-width="13"></circle>
+                  <circle class="donut-seg" id="donutElectron" cx="56" cy="56" r="46" fill="none"
+                    stroke="var(--tmc-electron)" stroke-width="13" stroke-dasharray="0 289" stroke-linecap="butt"></circle>
+                  <circle class="donut-seg" id="donutTauri" cx="56" cy="56" r="46" fill="none"
+                    stroke="var(--tmc-tauri)" stroke-width="13" stroke-dasharray="0 289" stroke-linecap="butt"></circle>
+                  <circle class="donut-seg" id="donutWails" cx="56" cy="56" r="46" fill="none"
+                    stroke="var(--tmc-wails)" stroke-width="13" stroke-dasharray="0 289" stroke-linecap="butt"></circle>
+                </svg>
+                <div class="donut-center">
+                  <div class="donut-center-num" id="donutCenterNum">0</div>
+                  <div class="donut-center-label">应用</div>
+                </div>
+              </div>
+              <div class="donut-legend" id="donutLegend">
+                <div class="donut-legend-item">
+                  <span class="donut-legend-name"><span class="legend-dot" style="background: var(--tmc-electron)"></span>Electron</span>
+                  <span class="donut-legend-value" id="legendElectron">0</span>
+                </div>
+                <div class="donut-legend-item">
+                  <span class="donut-legend-name"><span class="legend-dot" style="background: var(--tmc-tauri)"></span>Tauri</span>
+                  <span class="donut-legend-value" id="legendTauri">0</span>
+                </div>
+                <div class="donut-legend-item">
+                  <span class="donut-legend-name"><span class="legend-dot" style="background: var(--tmc-wails)"></span>Wails</span>
+                  <span class="donut-legend-value" id="legendWails">0</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="stats-divider"></div>
+
+          <!-- 存储排行 Top 5 -->
+          <div class="stats-section">
+            <div class="stats-label">存储排行 Top 5</div>
+            <div class="rank-list" id="storage-ranking">
+              <!-- 排行行通过 JavaScript 动态生成 -->
+            </div>
+          </div>
+
+          <div class="stats-divider"></div>
+
+          <!-- 版本健康度 -->
+          <div class="stats-section">
+            <div class="stats-label">版本健康度</div>
+            <div class="health-list" id="healthSummary">
+              <!-- 健康度行通过 JavaScript 动态生成 -->
+            </div>
+          </div>
+        </div>
+      </aside>
+    </main>
+
+    <!-- 详情弹层遮罩与卡片 -->
+    <div class="popover-overlay" id="popoverOverlay"></div>
+    <div class="app-popover" id="app-detail-popover" data-dom-id="app-detail-popover">
+      <!-- 内容通过 JavaScript 动态填充 -->
+    </div>
+  </div>
+
+  <script>
+    /* ============================================================
+       应用数据定义（对齐 detection-strategy.md 数据模型）
+       bodyMB：.app 本身体积；dataMB：~/Library 下用户数据
+       （Application Support + Caches + Containers 合计）
+       status：current/ok/aging/outdated 对应绿/绿/黄/红四档
+       ============================================================ */
+    const APPS = [
+      // ---------- Electron（28 个） ----------
+      { name: 'VS Code', type: 'electron', version: '33.2.0', status: 'current', bodyMB: 380, dataMB: 620 },
+      { name: 'Slack', type: 'electron', version: '28.3.1', status: 'aging', bodyMB: 320, dataMB: 540 },
+      { name: 'Discord', type: 'electron', version: '30.1.2', status: 'ok', bodyMB: 290, dataMB: 780 },
+      { name: 'Figma', type: 'electron', version: '31.0.0', status: 'ok', bodyMB: 310, dataMB: 260 },
+      { name: 'Notion', type: 'electron', version: '33.4.1', status: 'current', bodyMB: 350, dataMB: 410 },
+      { name: 'Spotify', type: 'electron', version: '22.1.0', status: 'outdated', bodyMB: 280, dataMB: 350 },
+      { name: 'Trello', type: 'electron', version: '25.2.3', status: 'aging', bodyMB: 260, dataMB: 95 },
+      { name: 'Postman', type: 'electron', version: '31.2.0', status: 'ok', bodyMB: 420, dataMB: 310 },
+      { name: 'Zoom', type: 'electron', version: '27.0.1', status: 'aging', bodyMB: 340, dataMB: 220 },
+      { name: 'Skype', type: 'electron', version: '21.3.2', status: 'outdated', bodyMB: 300, dataMB: 180 },
+      { name: 'Twitch', type: 'electron', version: '26.0.4', status: 'aging', bodyMB: 270, dataMB: 120 },
+      { name: 'WhatsApp', type: 'electron', version: '33.3.0', status: 'current', bodyMB: 290, dataMB: 240 },
+      { name: 'Telegram', type: 'electron', version: '30.2.1', status: 'ok', bodyMB: 250, dataMB: 380 },
+      { name: 'Signal', type: 'electron', version: '32.0.0', status: 'current', bodyMB: 280, dataMB: 160 },
+      { name: 'Minecraft Launcher', type: 'electron', version: '24.1.0', status: 'aging', bodyMB: 330, dataMB: 90 },
+      { name: 'GitHub Desktop', type: 'electron', version: '33.1.2', status: 'current', bodyMB: 360, dataMB: 140 },
+      { name: 'Atom', type: 'electron', version: '19.0.1', status: 'outdated', bodyMB: 310, dataMB: 210 },
+      { name: '1Password', type: 'electron', version: '31.4.0', status: 'ok', bodyMB: 270, dataMB: 85 },
+      { name: 'Dropbox', type: 'electron', version: '29.3.2', status: 'ok', bodyMB: 400, dataMB: 450 },
+      { name: 'Evernote', type: 'electron', version: '23.2.0', status: 'outdated', bodyMB: 350, dataMB: 520 },
+      { name: 'Asana', type: 'electron', version: '30.0.3', status: 'ok', bodyMB: 260, dataMB: 110 },
+      { name: 'Basecamp', type: 'electron', version: '28.1.0', status: 'aging', bodyMB: 255, dataMB: 75 },
+      { name: 'Linear', type: 'electron', version: '34.0.1', status: 'current', bodyMB: 320, dataMB: 200 },
+      { name: 'Insomnia', type: 'electron', version: '29.0.2', status: 'ok', bodyMB: 340, dataMB: 130 },
+      { name: 'MongoDB Compass', type: 'electron', version: '26.2.1', status: 'aging', bodyMB: 380, dataMB: 95 },
+      { name: 'Redis Insight', type: 'electron', version: '28.0.0', status: 'aging', bodyMB: 355, dataMB: 88 },
+      { name: 'Docker Desktop', type: 'electron', version: '31.1.3', status: 'ok', bodyMB: 700, dataMB: 800 },
+      { name: 'Arc', type: 'electron', version: '33.0.5', status: 'current', bodyMB: 450, dataMB: 640 },
+      // ---------- Tauri（4 个） ----------
+      { name: 'Spacedrive', type: 'tauri', version: '2.1.0', status: 'ok', bodyMB: 28, dataMB: 120 },
+      { name: 'Lapce', type: 'tauri', version: '2.0.1', status: 'ok', bodyMB: 24, dataMB: 60 },
+      { name: 'Prism Launcher', type: 'tauri', version: '2.2.0', status: 'current', bodyMB: 30, dataMB: 210 },
+      { name: 'Espanso', type: 'tauri', version: '1.8.0', status: 'aging', bodyMB: 18, dataMB: 35 },
+      // ---------- Wails（3 个） ----------
+      { name: 'Rayso', type: 'wails', version: '2.4.2', status: 'unknown', bodyMB: 22, dataMB: 40 },
+      { name: 'Vesktop', type: 'wails', version: '2.3.0', status: 'unknown', bodyMB: 26, dataMB: 150 },
+      { name: 'Itch Manager', type: 'wails', version: '2.1.1', status: 'unknown', bodyMB: 20, dataMB: 55 }
+    ];
+
+    const TYPE_META = {
+      electron: { label: 'Electron', dot: 'var(--tmc-electron)' },
+      tauri: { label: 'Tauri', dot: 'var(--tmc-tauri)' },
+      wails: { label: 'Wails', dot: 'var(--tmc-wails)' }
+    };
+
+    const STATUS_META = {
+      current: { label: '版本较新', color: 'var(--tmc-status-good)' },
+      ok: { label: '版本正常', color: 'var(--tmc-status-good)' },
+      aging: { label: '建议更新', color: 'var(--tmc-status-warn)' },
+      outdated: { label: '版本老旧', color: 'var(--tmc-status-bad)' },
+      unknown: { label: '未知版本', color: 'var(--tmc-status-unknown)' }
+    };
+
+    const DONUT_C = 2 * Math.PI * 46; // 环形图周长
+
+    let currentFilter = 'all';
+    let linkedIndex = null; // 排行行 ↔ 网格图标联动高亮
+
+    /* ============================================================
+       工具函数
+       ============================================================ */
+
+    /** 应用存储合计（MB） */
+    function totalMB(app) {
+      return app.bodyMB + app.dataMB;
+    }
+
+    /** MB 格式化为人类可读字符串 */
+    function fmtMB(mb) {
+      return mb >= 1024 ? (mb / 1024).toFixed(1) + ' GB' : Math.round(mb) + ' MB';
+    }
+
+    /** 获取应用名称首字母（最多 2 个字符） */
+    function getInitials(appName) {
+      const words = appName.split(/[\s\-]/).filter(w => w.length > 0);
+      if (words.length === 1) {
+        return words[0].charAt(0).toUpperCase();
+      }
+      return (words[0].charAt(0) + words[1].charAt(0)).toUpperCase();
+    }
+
+    /** 数字更新：终值立即落盘保证正确性，再用 numPop 翻入动画
+       做纯视觉润色；动画被节流/禁用时用户看到的仍是正确数值 */
+    function animateNumber(el, to, opts = {}) {
+      const { decimals = 0, suffix = '' } = opts;
+      el.dataset.value = to;
+      el.textContent = to.toFixed(decimals) + suffix;
+      // 重启翻入动画
+      el.classList.remove('num-pop');
+      void el.offsetWidth;
+      el.classList.add('num-pop');
+    }
+
+    /* ============================================================
+       图标网格渲染
+       ============================================================ */
+    function renderIconGrid() {
+      const grid = document.getElementById('iconGrid');
+      grid.innerHTML = '';
+
+      APPS.forEach((app, index) => {
+        const card = document.createElement('button');
+        card.type = 'button';
+        card.className = 'icon-card';
+        card.dataset.type = app.type;
+        card.dataset.index = index;
+        card.title = `${app.name} · ${fmtMB(totalMB(app))}`;
+
+        const iconWrap = document.createElement('span');
+        iconWrap.className = 'icon-wrap';
+
+        const icon = document.createElement('div');
+        icon.className = `app-icon ${app.type}`;
+        icon.textContent = getInitials(app.name);
+
+        const dot = document.createElement('span');
+        dot.className = `status-dot ${app.status}`;
+        dot.title = STATUS_META[app.status].label;
+
+        iconWrap.appendChild(icon);
+        iconWrap.appendChild(dot);
+
+        const name = document.createElement('div');
+        name.className = 'app-name';
+        name.textContent = app.name;
+
+        const size = document.createElement('div');
+        size.className = 'app-size';
+        size.textContent = fmtMB(totalMB(app));
+
+        card.appendChild(iconWrap);
+        card.appendChild(name);
+        card.appendChild(size);
+
+        card.addEventListener('click', () => {
+          if (!card.classList.contains('filtered-out')) {
+            showPopover(index, icon);
+          }
+        });
+
+        grid.appendChild(card);
+      });
+    }
+
+    /* ============================================================
+       统计聚合与面板渲染
+       ============================================================ */
+
+    /** 按当前过滤器取应用列表 */
+    function filteredApps() {
+      return currentFilter === 'all' ? APPS : APPS.filter(a => a.type === currentFilter);
+    }
+
+    /** 渲染右侧报告面板全部区块（animate 控制宽度/环动画是否生效） */
+    function renderStatsPanel(animate) {
+      const apps = filteredApps();
+      const count = apps.length;
+      const bodyTotal = apps.reduce((s, a) => s + a.bodyMB, 0);
+      const dataTotal = apps.reduce((s, a) => s + a.dataMB, 0);
+      const storageTotalMB = bodyTotal + dataTotal;
+
+      // 工具栏副标题
+      document.getElementById('scanCount').textContent =
+        `已扫描 ${count} 个应用 · ${fmtMB(storageTotalMB)}`;
+
+      // 概览：总数与存储合计（数字滚动）
+      animateNumber(document.getElementById('totalCount'), count, { duration: 700 });
+      document.getElementById('storageTotal').textContent = fmtMB(storageTotalMB);
+      document.getElementById('bodyTotal').textContent = fmtMB(bodyTotal);
+      document.getElementById('dataTotal').textContent = fmtMB(dataTotal);
+
+      // 本体 vs 数据堆叠条
+      const bodyPct = storageTotalMB ? (bodyTotal / storageTotalMB) * 100 : 0;
+      const dataPct = storageTotalMB ? (dataTotal / storageTotalMB) * 100 : 0;
+      setBarWidth('segBody', bodyPct, animate);
+      setBarWidth('segData', dataPct, animate);
+
+      // 类型分布环形图：过滤到单一类型时分布无意义，隐藏该区块
+      const donutVisible = currentFilter === 'all';
+      document.getElementById('donutSection').style.display = donutVisible ? '' : 'none';
+      document.getElementById('donutDivider').style.display = donutVisible ? '' : 'none';
+
+      if (donutVisible) {
+        const byType = {
+          electron: apps.filter(a => a.type === 'electron').length,
+          tauri: apps.filter(a => a.type === 'tauri').length,
+          wails: apps.filter(a => a.type === 'wails').length
+        };
+        renderDonut(byType, count, animate);
+        document.getElementById('legendElectron').textContent =
+          count ? `${byType.electron} · ${(byType.electron / count * 100).toFixed(1)}%` : '0';
+        document.getElementById('legendTauri').textContent =
+          count ? `${byType.tauri} · ${(byType.tauri / count * 100).toFixed(1)}%` : '0';
+        document.getElementById('legendWails').textContent =
+          count ? `${byType.wails} · ${(byType.wails / count * 100).toFixed(1)}%` : '0';
+      }
+
+      // 存储排行 Top 5
+      renderRanking(apps, animate);
+
+      // 版本健康度
+      renderHealth(apps);
+    }
+
+    /** 设置条形宽度（animate=false 时跳过过渡，直接到位） */
+    function setBarWidth(elId, pct, animate) {
+      const el = document.getElementById(elId);
+      if (!animate) {
+        el.style.transition = 'none';
+        el.style.width = pct + '%';
+        void el.offsetWidth;
+        el.style.transition = '';
+      } else {
+        el.style.width = pct + '%';
+      }
+    }
+
+    /** 渲染环形占比图（SVG stroke-dasharray） */
+    function renderDonut(byType, total, animate) {
+      const segs = [
+        { el: document.getElementById('donutElectron'), value: byType.electron },
+        { el: document.getElementById('donutTauri'), value: byType.tauri },
+        { el: document.getElementById('donutWails'), value: byType.wails }
+      ];
+
+      let offset = 0;
+      segs.forEach(seg => {
+        const len = total ? (seg.value / total) * DONUT_C : 0;
+        const dasharray = `${Math.max(0, len - 1.5)} ${DONUT_C - Math.max(0, len - 1.5)}`;
+        if (!animate) {
+          seg.el.style.transition = 'none';
+          seg.el.setAttribute('stroke-dasharray', dasharray);
+          seg.el.setAttribute('stroke-dashoffset', -offset);
+          void seg.el.getBoundingClientRect();
+          seg.el.style.transition = '';
+        } else {
+          seg.el.setAttribute('stroke-dasharray', dasharray);
+          seg.el.setAttribute('stroke-dashoffset', -offset);
+        }
+        offset += len;
+      });
+
+      animateNumber(document.getElementById('donutCenterNum'), total, { duration: 700 });
+    }
+
+    /** 渲染存储排行 Top 5 */
+    function renderRanking(apps, animate) {
+      const list = document.getElementById('storage-ranking');
+      list.innerHTML = '';
+
+      const top = [...apps].sort((a, b) => totalMB(b) - totalMB(a)).slice(0, 5);
+      const maxMB = top.length ? totalMB(top[0]) : 1;
+
+      top.forEach(app => {
+        const globalIndex = APPS.indexOf(app);
+        const row = document.createElement('button');
+        row.type = 'button';
+        row.className = `rank-row ${app.type}`;
+        row.dataset.appIndex = globalIndex;
+
+        const bodyPct = (app.bodyMB / maxMB) * 100;
+        const dataPct = (app.dataMB / maxMB) * 100;
+
+        row.innerHTML = `
+          <div class="rank-icon ${app.type}">${getInitials(app.name)}</div>
+          <div class="rank-main">
+            <div class="rank-top">
+              <span class="rank-name">${app.name}</span>
+              <span class="rank-total">${fmtMB(totalMB(app))}</span>
+            </div>
+            <div class="rank-bar">
+              <div class="seg body-seg"></div>
+              <div class="seg data-seg"></div>
+            </div>
+          </div>
+        `;
+
+        list.appendChild(row);
+
+        // 双段条宽度动画（下一帧生效以触发过渡）
+        const bodySeg = row.querySelector('.seg.body-seg');
+        const dataSeg = row.querySelector('.seg.data-seg');
+        if (!animate) {
+          bodySeg.style.transition = 'none';
+          dataSeg.style.transition = 'none';
+        }
+        requestAnimationFrame(() => {
+          bodySeg.style.width = bodyPct + '%';
+          dataSeg.style.width = dataPct + '%';
+          if (!animate) {
+            bodySeg.style.transition = '';
+            dataSeg.style.transition = '';
+          }
+        });
+
+        // 点击排行行：弹详情 + 与网格图标联动高亮
+        row.addEventListener('click', () => {
+          setLinked(globalIndex);
+          const iconEl = document.querySelector(`.icon-card[data-index="${globalIndex}"] .app-icon`);
+          showPopover(globalIndex, iconEl || row);
+        });
+      });
+    }
+
+    /** 渲染版本健康度摘要 */
+    function renderHealth(apps) {
+      const container = document.getElementById('healthSummary');
+      const groups = [
+        { key: 'current', label: '当前最新' },
+        { key: 'ok', label: '较新正常' },
+        { key: 'aging', label: '建议更新' },
+        { key: 'outdated', label: '版本老旧' },
+        { key: 'unknown', label: '未知版本' }
+      ];
+
+      container.innerHTML = '';
+      groups.forEach(g => {
+        const n = apps.filter(a => a.status === g.key).length;
+        if (n === 0) return;
+        const row = document.createElement('div');
+        row.className = 'health-row';
+        row.innerHTML = `
+          <span class="health-name">
+            <span class="legend-dot" style="background: ${STATUS_META[g.key].color}"></span>${g.label}
+          </span>
+          <span class="health-count">${n}</span>
+        `;
+        container.appendChild(row);
+      });
+    }
+
+    /* ============================================================
+       联动高亮（排行行 ↔ 网格图标）
+       ============================================================ */
+    function setLinked(index) {
+      document.querySelectorAll('.icon-card.linked, .rank-row.linked')
+        .forEach(el => el.classList.remove('linked'));
+      linkedIndex = index;
+      const card = document.querySelector(`.icon-card[data-index="${index}"]`);
+      if (card) card.classList.add('linked');
+      const row = document.querySelector(`.rank-row[data-app-index="${index}"]`);
+      if (row) row.classList.add('linked');
+    }
+
+    function clearLinked() {
+      document.querySelectorAll('.icon-card.linked, .rank-row.linked')
+        .forEach(el => el.classList.remove('linked'));
+      linkedIndex = null;
+    }
+
+    /* ============================================================
+       应用详情弹层
+       ============================================================ */
+    function showPopover(index, anchorEl) {
+      const app = APPS[index];
+      const popover = document.getElementById('app-detail-popover');
+      const overlay = document.getElementById('popoverOverlay');
+      const appWindow = document.getElementById('appWindow');
+
+      const statusMeta = STATUS_META[app.status];
+      const total = totalMB(app);
+      const bodyPct = (app.bodyMB / total) * 100;
+      const dataPct = (app.dataMB / total) * 100;
+      const versionBadge = app.version
+        ? `<span class="badge">${TYPE_META[app.type].label} ${app.version}</span>`
+        : '';
+
+      popover.innerHTML = `
+        <div class="popover-head">
+          <div class="popover-icon ${app.type}">${getInitials(app.name)}</div>
+          <div class="popover-title-block">
+            <div class="popover-name">${app.name}</div>
+            <div class="popover-badges">
+              <span class="badge type ${app.type}">${TYPE_META[app.type].label}</span>
+              ${versionBadge}
+              <span class="badge status ${app.status}">${statusMeta.label}</span>
+            </div>
+          </div>
+          <button class="popover-close" id="popoverCloseBtn" title="关闭">✕</button>
+        </div>
+        <div class="popover-section">
+          <div class="popover-section-label">存储分解</div>
+          <div class="popover-total">${fmtMB(total)}</div>
+          <div class="stacked-bar">
+            <div class="seg body-seg" style="width: ${bodyPct}%"></div>
+            <div class="seg data-seg" style="width: ${dataPct}%"></div>
+          </div>
+          <div class="popover-breakdown-row">
+            <span class="k"><span class="legend-dot body"></span>应用本体</span>
+            <span class="v">${fmtMB(app.bodyMB)}</span>
+          </div>
+          <div class="popover-breakdown-row">
+            <span class="k"><span class="legend-dot data"></span>用户数据（Application Support / Caches / Containers）</span>
+            <span class="v">${fmtMB(app.dataMB)}</span>
+          </div>
+        </div>
+        <div class="popover-section">
+          <div class="popover-section-label">安装路径</div>
+          <div class="popover-path">/Applications/${app.name.replace(/\s+/g, '')}.app</div>
+        </div>
+      `;
+
+      // 定位：优先出现在锚点右侧，超出则翻转/夹持到窗口内
+      const winRect = appWindow.getBoundingClientRect();
+      const anchorRect = anchorEl.getBoundingClientRect();
+      const popWidth = 300;
+      const popHeight = 260;
+
+      let left = anchorRect.right - winRect.left + 14;
+      if (left + popWidth > winRect.width - 12) {
+        left = anchorRect.left - winRect.left - popWidth - 14;
+      }
+      left = Math.max(12, Math.min(left, winRect.width - popWidth - 12));
+
+      let top = anchorRect.top - winRect.top - 20;
+      top = Math.max(74, Math.min(top, winRect.height - popHeight - 12));
+
+      popover.style.left = left + 'px';
+      popover.style.top = top + 'px';
+
+      popover.classList.add('open');
+      overlay.classList.add('open');
+
+      document.getElementById('popoverCloseBtn').addEventListener('click', hidePopover);
+    }
+
+    function hidePopover() {
+      document.getElementById('app-detail-popover').classList.remove('open');
+      document.getElementById('popoverOverlay').classList.remove('open');
+      clearLinked();
+    }
+
+    /* ============================================================
+       开场动画：复印机扫描线（已选定方案）
+       光条从左到右线性扫过网格，被扫中的列依次去模糊显现；
+       列被扫中的时刻由该列中心 X 解析确定，与 CSS scanSweep
+       的线性位移严格换算对齐，列内图标按行序 45ms 逐个错开。
+       工具栏副标题随扫描进度滚动，结束后展开报告面板。
+       ============================================================ */
+    let animationRun = 0; // 运行令牌：重播时作废上一轮未完成的定时器
+
+    function playIntroAnimation() {
+      const run = ++animationRun;
+      const cards = Array.from(document.querySelectorAll('.icon-card'));
+      const grid = document.getElementById('iconGrid');
+      const statsPanel = document.getElementById('statsPanel');
+      const scanCountEl = document.getElementById('scanCount');
+
+      // 重置状态（含清理上一轮扫描线）
+      statsPanel.classList.remove('visible');
+      grid.querySelectorAll('.scanline').forEach(el => el.remove());
+      cards.forEach(card => {
+        card.classList.remove('visible', 'in-scan');
+        void card.offsetWidth;
+      });
+      scanCountEl.textContent = '已扫描 0 个应用 · 0 MB';
+
+      // 重置统计面板数值，待面板展开时重新滚动
+      ['totalCount', 'donutCenterNum'].forEach(id => {
+        const el = document.getElementById(id);
+        el.dataset.value = '0';
+        el.textContent = '0';
+      });
+      setBarWidth('segBody', 0, false);
+      setBarWidth('segData', 0, false);
+
+      const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (prefersReducedMotion) {
+        cards.forEach(card => card.classList.add('visible'));
+        statsPanel.classList.add('visible');
+        renderStatsPanel(false);
+        return;
+      }
+
+      // 光条挂载进网格，随 scanSweep 从 -8% 线性扫到 104%（1.1s）
+      const bar = document.createElement('div');
+      bar.className = 'scanline sweeping';
+      grid.appendChild(bar);
+
+      // 每列中心 X → 被扫中时刻；列内图标按行序 45ms 逐个错开
+      const gridRect = grid.getBoundingClientRect();
+      const cols = 7;
+      const sweepDuration = 1100; // 与 CSS scanSweep 时长保持一致
+      let scanned = 0;
+      let scannedMB = 0;
+
+      for (let c = 0; c < cols; c++) {
+        const columnCards = cards.filter((_, i) => i % cols === c);
+        if (!columnCards.length) continue;
+
+        const xs = columnCards.map(el => {
+          const r = el.getBoundingClientRect();
+          return r.left - gridRect.left + r.width / 2;
+        });
+        const colX = xs.reduce((s, x) => s + x, 0) / xs.length;
+        const revealAt = 60 + sweepDuration * (colX / gridRect.width) * 0.96;
+
+        columnCards.forEach((card, r) => {
+          setTimeout(() => {
+            if (run !== animationRun) return;
+            // 动画播完即摘除 in-scan，避免 fill both 压住 hover transform
+            card.addEventListener('animationend', () => {
+              card.classList.remove('in-scan');
+            }, { once: true });
+            card.classList.add('visible', 'in-scan');
+            scanned++;
+            scannedMB += totalMB(APPS[+card.dataset.index]);
+            scanCountEl.textContent = `已扫描 ${scanned} 个应用 · ${fmtMB(scannedMB)}`;
+          }, revealAt + r * 45);
+        });
+      }
+
+      // 扫描收尾：移除光条，展开报告面板并滚动数字
+      setTimeout(() => {
+        if (run !== animationRun) return;
+        bar.remove();
+        statsPanel.classList.add('visible');
+        renderStatsPanel(true);
+      }, 1650);
+    }
+
+    /* ============================================================
+       交互：过滤器与重播
+       ============================================================ */
+    function applyFilter(filter) {
+      currentFilter = filter;
+      hidePopover();
+
+      const cards = document.querySelectorAll('.icon-card');
+      cards.forEach(card => {
+        if (filter === 'all' || card.dataset.type === filter) {
+          card.classList.remove('filtered-out');
+        } else {
+          card.classList.add('filtered-out');
+        }
+      });
+
+      renderStatsPanel(true);
+    }
+
+    function initFilterButtons() {
+      const filterBtns = document.querySelectorAll('.filter-btn');
+      filterBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+          filterBtns.forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          applyFilter(btn.dataset.filter);
+        });
+      });
+    }
+
+    function initReplayButton() {
+      const replayBtn = document.getElementById('replayBtn');
+      replayBtn.addEventListener('click', () => {
+        replayBtn.classList.add('spinning');
+        setTimeout(() => replayBtn.classList.remove('spinning'), 600);
+        hidePopover();
+        playIntroAnimation();
+      });
+    }
+
+    /* ============================================================
+       初始化
+       ============================================================ */
+    function initApp() {
+      renderIconGrid();
+      initFilterButtons();
+      initReplayButton();
+
+      document.getElementById('popoverOverlay').addEventListener('click', hidePopover);
+      document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') hidePopover();
+      });
+
+      setTimeout(() => {
+        playIntroAnimation();
+      }, 100);
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initApp);
+    } else {
+      initApp();
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,64 @@
+{
+  "data": [
+    {
+      "id": "page-index",
+      "title": "扫描结果",
+      "type": "page",
+      "version": 1,
+      "createdAt": 1754227200000,
+      "canvasData": {
+        "x": 0,
+        "y": 0,
+        "group": 0,
+        "layoutSnapshot": {
+          "version": 1,
+          "contentHeight": 800,
+          "viewportWidth": 1440,
+          "sourceHash": "fnv1a-1405cd5a",
+          "measuredAt": 1785747381152
+        }
+      },
+      "devMetadata": {
+        "htmlSrc": "pages/index.html",
+        "interactions": [
+          {
+            "id": "filter-all",
+            "type": "click",
+            "domId": "filter-all",
+            "description": "切换到全部过滤"
+          },
+          {
+            "id": "filter-electron",
+            "type": "click",
+            "domId": "filter-electron",
+            "description": "切换到 Electron 过滤"
+          },
+          {
+            "id": "filter-tauri",
+            "type": "click",
+            "domId": "filter-tauri",
+            "description": "切换到 Tauri 过滤"
+          },
+          {
+            "id": "filter-wails",
+            "type": "click",
+            "domId": "filter-wails",
+            "description": "切换到 Wails 过滤"
+          },
+          {
+            "id": "replay-btn",
+            "type": "click",
+            "domId": "replay-btn",
+            "description": "重播动画"
+          }
+        ]
+      }
+    }
+  ],
+  "config": {
+    "autoLayout": true,
+    "deviceType": "desktop",
+    "projectName": "Too Much Chrome",
+    "visualEditorEnabled": false
+  }
+}

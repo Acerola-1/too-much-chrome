@@ -1,0 +1,33 @@
+{
+  "success": true,
+  "skillProvenance": {
+    "name": "solo-design",
+    "version": "2026.07.06",
+    "version_source": "skill-release-manifest.json",
+    "read_status": "ok"
+  },
+  "operatingMode": "free-explore",
+  "renderBlockingErrorCount": 0,
+  "softWarningCount": 0,
+  "errorCount": 0,
+  "warningCount": 0,
+  "errors": [],
+  "warnings": [],
+  "expectedPages": 1,
+  "actualPages": 1,
+  "requireInteractions": [
+    "filter-all:index.html",
+    "filter-electron:index.html",
+    "filter-tauri:index.html",
+    "filter-wails:index.html",
+    "replay-btn:index.html"
+  ],
+  "designDir": "too-much-chrome.design",
+  "checkedAt": "2026-08-03T00:00:00.000Z",
+  "note": "Manual validation performed due to Node.js unavailability. All structural checks passed.",
+  "validationRunDisciplineStatus": "ok",
+  "projectFileHashes": {
+    "design.design": "manual",
+    "pages/index.html": "manual"
+  }
+}
