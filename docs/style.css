@@ -94,6 +94,16 @@ h2 .sub{display:block;font-size:16px;color:var(--muted);font-weight:400;margin-t
 .badges{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:6px;}
 .badges img{height:20px;}
 
+/* ============ 界面预览 ============ */
+.screenshots{background:#fff;}
+.screenshots h2{text-align:center;}
+.screenshots h2 .sub{margin-left:auto;margin-right:auto;max-width:560px;}
+.screenshot{margin-top:44px;text-align:center;}
+.screenshot img{
+  width:100%;max-width:880px;border-radius:20px;
+  box-shadow:0 24px 60px -20px rgba(29,29,31,.3);
+}
+
 /* ============ 功能网格 ============ */
 .features{background:#fff;}
 .features h2{text-align:center;}

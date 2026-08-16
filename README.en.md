@@ -17,7 +17,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/acerola/too-much-chrome/releases/latest"><strong>Download Latest</strong></a> ·
+  <a href="https://github.com/Acerola-1/too-much-chrome/releases/latest"><strong>Download Latest</strong></a> ·
   <a href="https://acerola-1.github.io/too-much-chrome/"><strong>Website</strong></a> ·
   <a href="#highlights">Highlights</a> ·
   <a href="#installation">Installation</a> ·
@@ -89,7 +89,7 @@ only renders results. Scan and go, no resident processes.
 
 ## Installation
 
-1. Download the latest `.dmg` from [Releases](https://github.com/acerola/too-much-chrome/releases/latest)
+1. Download the latest `.dmg` from [Releases](https://github.com/Acerola-1/too-much-chrome/releases/latest)
 2. Open the DMG and drag Too Much Chrome into the Applications folder
 3. Launch it from Launchpad or Applications; the first scan begins automatically
 
@@ -127,11 +127,11 @@ merge into main → tag → GitHub Actions builds, signs, notarizes, and publish
 ## Star History
 
 <p align="center">
-  <a href="https://star-history.com/#acerola/too-much-chrome&Date">
+  <a href="https://star-history.com/#Acerola-1/too-much-chrome&Date">
     <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=acerola/too-much-chrome&type=Date&theme=dark" />
-      <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=acerola/too-much-chrome&type=Date" />
-      <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=acerola/too-much-chrome&type=Date" width="720" />
+      <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=Acerola-1/too-much-chrome&type=Date&theme=dark" />
+      <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=Acerola-1/too-much-chrome&type=Date" />
+      <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=Acerola-1/too-much-chrome&type=Date" width="720" />
     </picture>
   </a>
 </p>
@@ -150,7 +150,7 @@ This project is dual-licensed under **GNU AGPL-3.0**:
 - **Commercial use**: To use this project in a commercial product **without complying with the
   AGPL's copyleft obligations** (e.g. closed-source distribution or paid distribution without
   publishing source), you **must obtain a commercial license**. Open an issue or contact the
-  author via [GitHub](https://github.com/acerola/too-much-chrome).
+  author via [GitHub](https://github.com/Acerola-1/too-much-chrome).
 
 Copyright © 2026 Acerola. All rights reserved.
 

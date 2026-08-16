@@ -17,7 +17,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/acerola/too-much-chrome/releases/latest"><strong>最新版をダウンロード</strong></a> ·
+  <a href="https://github.com/Acerola-1/too-much-chrome/releases/latest"><strong>最新版をダウンロード</strong></a> ·
   <a href="https://acerola-1.github.io/too-much-chrome/"><strong>公式サイト</strong></a> ·
   <a href="#機能ハイライト">機能ハイライト</a> ·
   <a href="#インストール">インストール</a> ·
@@ -90,7 +90,7 @@ Swift / SwiftUI で開発。macOS 26 では Liquid Glass が自動で有効に�
 
 ## インストール
 
-1. [Releases](https://github.com/acerola/too-much-chrome/releases/latest) から最新の `.dmg` をダウンロード
+1. [Releases](https://github.com/Acerola-1/too-much-chrome/releases/latest) から最新の `.dmg` をダウンロード
 2. DMG を開いて Too Much Chrome を Applications フォルダへドラッグ
 3. Launchpad または Applications から起動。最初のスキャンが自動で始まります
 
@@ -128,11 +128,11 @@ main へマージ → タグ付け → GitHub Actions がビルド・署名・�
 ## Star History
 
 <p align="center">
-  <a href="https://star-history.com/#acerola/too-much-chrome&Date">
+  <a href="https://star-history.com/#Acerola-1/too-much-chrome&Date">
     <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=acerola/too-much-chrome&type=Date&theme=dark" />
-      <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=acerola/too-much-chrome&type=Date" />
-      <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=acerola/too-much-chrome&type=Date" width="720" />
+      <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=Acerola-1/too-much-chrome&type=Date&theme=dark" />
+      <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=Acerola-1/too-much-chrome&type=Date" />
+      <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=Acerola-1/too-much-chrome&type=Date" width="720" />
     </picture>
   </a>
 </p>
@@ -150,7 +150,7 @@ main へマージ → タグ付け → GitHub Actions がビルド・署名・�
   場合を含む）も AGPL-3.0 で完全なソースを公開する必要があります。
 - **商用利用**: **AGPL のコピーレフト義務に従わず**に商用製品へ利用する場合（例:
   クローズドソースでの配布、ソース非公開での有料配布）は、**商用ライセンスの取得が必要**です。
-  [GitHub](https://github.com/acerola/too-much-chrome) の Issue または作者への連絡でご相談ください。
+  [GitHub](https://github.com/Acerola-1/too-much-chrome) の Issue または作者への連絡でご相談ください。
 
 Copyright © 2026 Acerola. All rights reserved.
 

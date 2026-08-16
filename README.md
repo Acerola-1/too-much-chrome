@@ -17,7 +17,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/acerola/too-much-chrome/releases/latest"><strong>下载最新版</strong></a> ·
+  <a href="https://github.com/Acerola-1/too-much-chrome/releases/latest"><strong>下载最新版</strong></a> ·
   <a href="https://acerola-1.github.io/too-much-chrome/"><strong>官网</strong></a> ·
   <a href="#功能亮点">功能亮点</a> ·
   <a href="#安装">安装</a> ·
@@ -79,7 +79,7 @@ Swift / SwiftUI 原生开发，macOS 26+ 自动启用液态玻璃（低版本回
 
 ## 安装
 
-1. 从 [Releases](https://github.com/acerola/too-much-chrome/releases/latest) 下载最新版 `.dmg`
+1. 从 [Releases](https://github.com/Acerola-1/too-much-chrome/releases/latest) 下载最新版 `.dmg`
 2. 打开 DMG，将 Too Much Chrome 拖入 Applications 文件夹
 3. 从 Launchpad 或 Applications 启动，首次扫描自动开始
 
@@ -116,11 +116,11 @@ GitHub Actions 自动构建、签名、公证并发布 Release（详见 `.github
 ## Star History
 
 <p align="center">
-  <a href="https://star-history.com/#acerola/too-much-chrome&Date">
+  <a href="https://star-history.com/#Acerola-1/too-much-chrome&Date">
     <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=acerola/too-much-chrome&type=Date&theme=dark" />
-      <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=acerola/too-much-chrome&type=Date" />
-      <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=acerola/too-much-chrome&type=Date" width="720" />
+      <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=Acerola-1/too-much-chrome&type=Date&theme=dark" />
+      <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=Acerola-1/too-much-chrome&type=Date" />
+      <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=Acerola-1/too-much-chrome&type=Date" width="720" />
     </picture>
   </a>
 </p>
@@ -138,7 +138,7 @@ GitHub Actions 自动构建、签名、公证并发布 Release（详见 `.github
   AGPL-3.0 开源其完整源码。
 - **商业使用**：如果你希望在**不遵守 AGPL 开源义务**的前提下将本项目用于商业产品
   （例如闭源分发、上架收费而不公开源码），**必须获取商业授权**。
-  请通过 [GitHub](https://github.com/acerola/too-much-chrome) 提 Issue 或私信作者洽谈。
+  请通过 [GitHub](https://github.com/Acerola-1/too-much-chrome) 提 Issue 或私信作者洽谈。
 
 版权所有 © 2026 Acerola。保留所有权利。
 
