@@ -203,9 +203,9 @@ python3 - "$BUILD_SCRIPT" "$VERSION" <<'PY'
 import re, sys
 path, version = sys.argv[1], sys.argv[2]
 src = open(path).read()
-new = re.sub(r'VERSION="\$\{VERSION:-[^"]*\}', 'VERSION="${VERSION:-' + version + '}', src, count=1)
-assert new != src, f"未在 {path} 中找到 VERSION 配置行"
-open(path, 'w').write(new)
+pat = re.compile(r'VERSION="\$\{VERSION:-[^"]*\}')
+assert pat.search(src), f"未在 {path} 中找到 VERSION 配置行"
+open(path, 'w').write(pat.sub(f'VERSION="${{VERSION:-{version}}}', src, count=1))
 PY
 
 # ===== 组装发布说明 =====
