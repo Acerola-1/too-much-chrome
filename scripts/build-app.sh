@@ -42,7 +42,12 @@ swift build -c release --product "$APP_NAME"
 echo "==> 组装 .app"
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS"
+mkdir -p "$APP/Contents/Resources"
 cp ".build/release/${APP_NAME}" "$APP/Contents/MacOS/${APP_NAME}"
+
+echo "==> 生成并嵌入应用图标"
+swift scripts/render_icon.swift .build/icon-render
+cp .build/icon-render/AppIcon.icns "$APP/Contents/Resources/AppIcon.icns"
 
 cat > "$APP/Contents/Info.plist" << EOF
 <?xml version="1.0" encoding="UTF-8"?>
@@ -50,6 +55,7 @@ cat > "$APP/Contents/Info.plist" << EOF
 <plist version="1.0">
 <dict>
     <key>CFBundleExecutable</key><string>${APP_NAME}</string>
+    <key>CFBundleIconFile</key><string>AppIcon</string>
     <key>CFBundleIdentifier</key><string>${BUNDLE_ID}</string>
     <key>CFBundleName</key><string>${DISPLAY_NAME}</string>
     <key>CFBundleDisplayName</key><string>${DISPLAY_NAME}</string>
