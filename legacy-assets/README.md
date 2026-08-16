@@ -19,3 +19,5 @@
 | `icon-concepts/D-lens/` | `icon-prototypes/` | 图标概念 D（放大镜早期版），同上 |
 | `icon-concepts/overview.png` | `icon-prototypes/` | 五概念对比拼图（含已归档概念，已过时） |
 | `official-candidates/vscode-*` | `icon-prototypes/official/` | VS Code 图标候选（mac icns / win ico / 候选对比图），已定为官网 apple-touch-icon 版 |
+| `too-much-chrome.design/` | 仓库根 `too-much-chrome.design/` | 上线前 UI 原型与设计对照文档整体归档：`pages/index.html`（扫描结果 UI 原型）、`pages/loading-concepts.html`（六动画概念对比）、`colors_and_type.css`（设计令牌）、`swiftui-mapping.md`（原型 ↔ SwiftUI 对照）、`design.design`（原型元数据）、两个验证 JSON 与 `.preflight/`。选定方案均已实装进 GUI |
+| `LoadingConcepts/` | 仓库根 `LoadingConcepts/` | 开场动画六概念独立 SwiftPM 演示工程。选定的"扫描线"概念（⑥）已实装进 GUI（`Sources/TooMuchChrome/ContentView.swift` 的 `ScanlineOverlay`）；此归档用于追溯其余概念的完整源码 |

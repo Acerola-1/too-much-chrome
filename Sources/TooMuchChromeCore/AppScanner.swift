@@ -1,11 +1,9 @@
 import Foundation
 
 // MARK: - 扫描器
-// 按 detection-strategy.md 实现：
-//   Tier 1  Electron / CEF / NW.js —— 框架目录特征，准确率接近 100%
-//   Tier 3  完整浏览器 —— 名称 / Bundle ID 匹配，仅列出
-//   Tier 2  Tauri / Wails —— Bundle ID 与资源目录关键词，实验性
-//   Tier 4  未知 WebView —— 默认关闭（误报风险高）
+// 检测分层见 detection-strategy.md：Tier 1 Electron/CEF/NW.js（框架特征，高准确率）、
+// Tier 3 完整浏览器（名称 / Bundle ID）、Tier 2 Tauri/Wails（关键词，实验性）、
+// Tier 4 未知 WebView 默认关闭（误报风险高）。
 // 扫描路径：/Applications 与 ~/Applications（顶层 .app）
 
 public enum AppScanner {

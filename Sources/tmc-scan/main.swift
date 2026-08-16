@@ -14,27 +14,16 @@ Task.detached(priority: .userInitiated) {
     var baseline: VersionBaseline? = nil
     if online {
         baseline = await VersionCatalog.refresh()
-        print("版本基准 · \(baseline!.sourceText)：\(baseline!.summaryText)\n")
+        if let baseline {
+            print("版本基准 · \(baseline.sourceText)：\(baseline.summaryText)\n")
+        }
     }
 
     let urls = AppScanner.candidateURLs()
     print("枚举到 \(urls.count) 个 .app，开始检测…\n")
 
     func statusMark(_ app: DetectedApp) -> String {
-        let status: VersionStatus
-        switch app.type {
-        case .electron:
-            status = VersionBands.electronStatus(app.version, latestMajor: baseline?.electronMajor)
-        case .cef, .browser:
-            status = VersionBands.chromiumStatus(app.version, latestMajor: baseline?.chromiumMajor)
-        case .tauri:
-            status = VersionBands.tauriStatus(app.version, latest: baseline?.tauriVersion)
-        case .wails:
-            status = VersionBands.wailsStatus(app.version, latest: baseline?.wailsVersion)
-        case .nwjs:
-            status = .unknown
-        }
-        switch status {
+        switch VersionBands.status(for: app.type, version: app.version, latest: baseline) {
         case .current, .ok: return "✅"
         case .aging: return "⚠️ "
         case .outdated: return "🔴"

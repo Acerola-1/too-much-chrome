@@ -3,8 +3,6 @@ import AppKit
 import TooMuchChromeCore
 
 // MARK: - 液态玻璃（macOS 26+，低版本回退毛玻璃材质）
-// 规范：玻璃仅用于导航层 / 浮动控件；多个玻璃元素需在 GlassEffectContainer 内编组；
-// glassEffect(in:) 自带形状，不再叠加 clipShape。
 
 extension View {
     /// 液态玻璃（macOS 26+），interactive 提供按压反馈；回退 .regularMaterial
@@ -22,16 +20,6 @@ extension View {
     }
 }
 
-/// 编组多个玻璃元素（macOS 26 生效；低版本透明透传）
-@ViewBuilder
-func GlassGroup<Content: View>(spacing: CGFloat = 12, @ViewBuilder content: () -> Content) -> some View {
-    if #available(macOS 26.0, *) {
-        GlassEffectContainer(spacing: spacing, content: content)
-    } else {
-        content()
-    }
-}
-
 // MARK: - 类型与状态配色
 
 extension AppType {
@@ -43,17 +31,6 @@ extension AppType {
         case .tauri:    Color(red: 0.545, green: 0.361, blue: 0.965) // #8b5cf6
         case .wails:    Color(red: 0.024, green: 0.714, blue: 0.831) // #06b6d4
         case .browser:  Color(red: 0.596, green: 0.596, blue: 0.616) // #98989d
-        }
-    }
-
-    var light: Color {
-        switch self {
-        case .electron: Color(red: 0.353, green: 0.784, blue: 0.98)
-        case .cef:      Color(red: 1, green: 0.78, blue: 0.35)
-        case .nwjs:     Color(red: 0.62, green: 0.6, blue: 0.94)
-        case .tauri:    Color(red: 0.769, green: 0.71, blue: 0.992)
-        case .wails:    Color(red: 0.404, green: 0.91, blue: 0.976)
-        case .browser:  Color(red: 0.75, green: 0.75, blue: 0.77)
         }
     }
 }

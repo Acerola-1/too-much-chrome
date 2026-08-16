@@ -27,22 +27,52 @@ BUNDLE_ID="${BUNDLE_ID:-com.acerola.too-much-chrome}"
 SIGN_IDENTITY="${SIGN_IDENTITY:-Developer ID Application: jiliang mo (VTQ6S5M4K3)}"
 TEAM_ID="${TEAM_ID:-VTQ6S5M4K3}"
 VERSION="${VERSION:-0.1.0}"
-BUILD="${BUILD:-1}"
+# CFBundleVersion：Sparkle 依赖其单调递增来判断新版本，默认取 git 提交数
+BUILD="${BUILD:-$(git rev-list --count HEAD 2>/dev/null || echo 1)}"
 NOTARY_PROFILE="${NOTARY_PROFILE:-tmc-notary}"
 # CI 可用显式凭证替代 keychain profile
 APPLE_ID="${APPLE_ID:-}"
 NOTARY_PASSWORD="${NOTARY_PASSWORD:-}"
+# Sparkle 自动更新（appcast 部署在 GitHub Pages；公钥由 generate_keys --account too-much-chrome 生成）
+SU_FEED_URL="${SU_FEED_URL:-https://acerola-1.github.io/too-much-chrome/appcast.xml}"
+SU_PUBLIC_ED_KEY="${SU_PUBLIC_ED_KEY:-CqwheCVmQo889+Vt0NP+qMIYqapMdgR63oIU85NAf6c=}"
 # ---------------
 
 APP=".build/${APP_NAME}.app"
 
 echo "==> Release 构建 ${APP_NAME} ${VERSION} (${BUILD})"
-swift build -c release --product "$APP_NAME"
+# 仅支持 Apple Silicon：显式 arm64，避免在 x86_64 环境意外打出 Intel 包；
+# rpath 指向 Contents/Frameworks（纯 SwiftPM 需手动嵌 Sparkle.framework）
+swift build -c release --product "$APP_NAME" --arch arm64 \
+  -Xlinker -rpath -Xlinker @executable_path/../Frameworks
 
 echo "==> 组装 .app"
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS"
+mkdir -p "$APP/Contents/Resources"
 cp ".build/release/${APP_NAME}" "$APP/Contents/MacOS/${APP_NAME}"
+
+# 架构断言：产物必须是纯 arm64（不提供 Intel 版）
+ARCHS=$(lipo -archs ".build/release/${APP_NAME}")
+if [[ "$ARCHS" != "arm64" ]]; then
+  echo "✗ 二进制架构为「${ARCHS}」，仅支持 Apple Silicon（arm64）" >&2
+  exit 1
+fi
+echo "==> 架构校验通过：arm64 单架构"
+
+echo "==> 生成并嵌入应用图标"
+swift scripts/render_icon.swift .build/icon-render
+cp .build/icon-render/AppIcon.icns "$APP/Contents/Resources/AppIcon.icns"
+
+echo "==> 嵌入 Sparkle.framework"
+SPARKLE_FW_SRC=".build/artifacts/sparkle/Sparkle/Sparkle.xcframework/macos-arm64_x86_64/Sparkle.framework"
+if [[ ! -d "$SPARKLE_FW_SRC" ]]; then
+  echo "✗ 未找到 Sparkle.framework（${SPARKLE_FW_SRC}），请先 swift build 拉取依赖" >&2
+  exit 1
+fi
+mkdir -p "$APP/Contents/Frameworks"
+# ditto 保留符号链接与可执行权限（Sparkle 官方对打包方式的显式要求）
+ditto "$SPARKLE_FW_SRC" "$APP/Contents/Frameworks/Sparkle.framework"
 
 cat > "$APP/Contents/Info.plist" << EOF
 <?xml version="1.0" encoding="UTF-8"?>
@@ -50,6 +80,7 @@ cat > "$APP/Contents/Info.plist" << EOF
 <plist version="1.0">
 <dict>
     <key>CFBundleExecutable</key><string>${APP_NAME}</string>
+    <key>CFBundleIconFile</key><string>AppIcon</string>
     <key>CFBundleIdentifier</key><string>${BUNDLE_ID}</string>
     <key>CFBundleName</key><string>${DISPLAY_NAME}</string>
     <key>CFBundleDisplayName</key><string>${DISPLAY_NAME}</string>
@@ -59,6 +90,8 @@ cat > "$APP/Contents/Info.plist" << EOF
     <key>LSMinimumSystemVersion</key><string>14.0</string>
     <key>NSHighResolutionCapable</key><true/>
     <key>LSApplicationCategoryType</key><string>public.app-category.utilities</string>
+    <key>SUFeedURL</key><string>${SU_FEED_URL}</string>
+    <key>SUPublicEDKey</key><string>${SU_PUBLIC_ED_KEY}</string>
 </dict>
 </plist>
 EOF
@@ -71,8 +104,27 @@ if [[ -n "$SIGN_IDENTITY" ]] && security find-identity -v -p codesigning 2>/dev/
   SIGN_AVAILABLE=1
 fi
 
+# Sparkle.framework 内嵌的 Autoupdate / Updater.app / XPC 自带 ad-hoc 签名，
+# 公证会拒绝残留的 ad-hoc 签名，必须由叶到根重签（不用 --deep，参照 Sparkle 官方文档）
+sign_sparkle() {
+  local identity="$1"
+  local fw="$APP/Contents/Frameworks/Sparkle.framework/Versions/Current"
+  local opts=(--force --sign "$identity")
+  if [[ "$identity" == "-" ]]; then
+    opts+=(--options runtime)
+  else
+    opts+=(--timestamp --options runtime --preserve-metadata=identifier,entitlements,flags)
+  fi
+  codesign "${opts[@]}" "$fw/XPCServices/Installer.xpc"
+  codesign "${opts[@]}" "$fw/XPCServices/Downloader.xpc"
+  codesign "${opts[@]}" "$fw/Autoupdate"
+  codesign "${opts[@]}" "$fw/Updater.app"
+  codesign "${opts[@]}" "$APP/Contents/Frameworks/Sparkle.framework"
+}
+
 if [[ "$MODE" == "dev" || "$SIGN_AVAILABLE" -eq 0 ]]; then
-  echo "==> adhoc 签名"
+  echo "==> adhoc 签名（含 Sparkle 嵌套组件）"
+  sign_sparkle "-"
   codesign --force --sign - --options runtime "$APP"
   if [[ "$MODE" == "dev" ]]; then
     pkill -x "$APP_NAME" 2>/dev/null || true
@@ -83,7 +135,8 @@ if [[ "$MODE" == "dev" || "$SIGN_AVAILABLE" -eq 0 ]]; then
   echo "⚠ 未找到 Developer ID 证书，已 adhoc 签名并跳过公证"
   SKIP_NOTARY=1
 else
-  echo "==> Developer ID 签名（hardened runtime + secure timestamp）"
+  echo "==> Developer ID 签名（hardened runtime + secure timestamp，含 Sparkle 嵌套组件）"
+  sign_sparkle "$SIGN_IDENTITY"
   codesign --force --sign "$SIGN_IDENTITY" --options runtime --timestamp "$APP"
   codesign --verify --strict --verbose=2 "$APP"
   spctl --assess --type execute -v "$APP" || true

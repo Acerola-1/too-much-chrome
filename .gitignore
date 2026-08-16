@@ -10,3 +10,7 @@ xcuserdata/
 
 # 工具运行缓存
 .omo/
+.zcode/
+
+# Sparkle 私钥（本地导出备份用，禁止入库）
+*.ed25519
