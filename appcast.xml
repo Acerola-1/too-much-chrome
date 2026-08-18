@@ -3,26 +3,27 @@
     <channel>
         <title>TooMuchChrome</title>
         <item>
-            <title>0.1.2</title>
-            <pubDate>Sun, 16 Aug 2026 18:04:46 +0000</pubDate>
-            <sparkle:version>14</sparkle:version>
-            <sparkle:shortVersionString>0.1.2</sparkle:shortVersionString>
+            <title>0.1.3</title>
+            <pubDate>Tue, 18 Aug 2026 10:13:42 +0000</pubDate>
+            <sparkle:version>15</sparkle:version>
+            <sparkle:shortVersionString>0.1.3</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
             <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
             <description><![CDATA[<!DOCTYPE html><html><head><meta charset="utf-8"><style>body{font-family:-apple-system,sans-serif;font-size:13px;line-height:1.5;padding:8px;}pre{white-space:pre-wrap;}</style></head><body><pre>
 ## 更新内容
 
-### 修复
+### 新功能
 
-- 扫描器不再误报自身：本工具二进制内嵌检测关键词字面量，扫描自己会误判为 Wails，现按 bundle id 无条件跳过任意副本
+- 支持引导壳应用检测：Steam 的真实客户端（CEF）自更新到 Application Support 内，此前漏检，现已正确检出并计入体积
 
 ### 代码质量
 
-- 新增 AppScanner 自检测回归测试（3 个用例）
+- 体积口径修正：引导壳应用的数据目录扣除客户端本体与游戏安装内容，避免重复计入
+- 同步 detection-strategy.md 扫描路径说明，新增引导壳布局回归测试
 
 </pre></body></html>
 ]]></description>
-            <enclosure url="https://github.com/Acerola-1/too-much-chrome/releases/download/v0.1.2/TooMuchChrome-v0.1.2.zip" length="2635902" type="application/octet-stream" sparkle:edSignature="9HJqB3g5u/iaOPWaeo54lNI5JDi1dnhsXhjxOH2C21ouexy/4XUyzPXtDdhQcMbjBPUs1ftyWLQRIsedKt5CAg=="/>
+            <enclosure url="https://github.com/Acerola-1/too-much-chrome/releases/download/v0.1.3/TooMuchChrome-v0.1.3.zip" length="2639310" type="application/octet-stream" sparkle:edSignature="s3T4x4n3cTfxvxz8pr12f1GWEdZbz2ekD8RiX/gwXluGXo1ovqn/9Hhqpr4rsHg80w8AYiF3+n/0dlqpkCq0Bw=="/>
         </item>
     </channel>
 </rss>
