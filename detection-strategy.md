@@ -23,6 +23,15 @@
 > 仍为 `com.github.Electron.framework`——目录名与 plist Bundle ID 应双特征匹配。
 > 版本号此时读框架 plist 的 `CFBundleVersion`（QQ 为 40.0.0）。
 
+> **引导壳应用（2026-08 实测，Steam）**：`/Applications/Steam.app` 只是微型引导器
+> （Frameworks 仅 Breakpad），真实客户端自更新到
+> `~/Library/Application Support/Steam/Steam.AppBundle/Steam/`——包根**不带 .app 后缀**，
+> 其 Frameworks 内才是真正的 `Chromium Embedded Framework.framework`（实测 CEF 126）。
+> 处理：顶层应用所有特征落空时，回退下钻 `<AppSupport>/<名>/<名>.AppBundle/` 下带
+> `Contents/Info.plist` 的直接子目录再检一次；报告路径指向真实客户端。
+> 体积口径：数据目录扣除客户端本体（避免与本体重复计）与 `steamapps` 游戏安装内容
+> （非 Chrome 内核，本机实测 29GB）；Steam 本体约 1.2GB。
+
 **版本号获取：**
 - Electron: 读取 `Electron Framework.framework/Versions/A/Resources/Info.plist` 中的 `CFBundleVersion`
 - CEF: 读取 `Chromium Embedded Framework.framework/Versions/A/Resources/Info.plist`
@@ -92,8 +101,7 @@
 ```
 /Applications                    ← 系统级应用
 ~/Applications                   ← 用户级应用
-/Library/Application Support     ← 部分企业软件（如 aTrust）
-~/Library/Application Support  ← 部分用户安装的应用
+~/Library/Application Support/<名>/<名>.AppBundle/  ← 引导壳应用的真实客户端（Steam，按需下钻）
 ```
 
 **App Store 限制：** 沙箱应用无法访问 `/Applications` 和 `/Library`，需要用户手动授权"完整磁盘访问权限"。

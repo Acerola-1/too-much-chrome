@@ -4,13 +4,18 @@ import Foundation
 // 检测分层见 detection-strategy.md：Tier 1 Electron/CEF/NW.js（框架特征，高准确率）、
 // Tier 3 完整浏览器（名称 / Bundle ID）、Tier 2 Tauri/Wails（关键词，实验性）、
 // Tier 4 未知 WebView 默认关闭（误报风险高）。
-// 扫描路径：/Applications 与 ~/Applications（顶层 .app）
+// 扫描路径：/Applications 与 ~/Applications（顶层 .app）；
+// 引导壳应用（如 Steam）的真实客户端在 ~/Library/Application Support 内，detect 时回退下钻
 
 public enum AppScanner {
 
     /// 扫描器自身的 bundle id：其二进制内嵌检测关键词字面量（"wailsapp" 等），
     /// 扫描到自己必然误报 Wails，故永不报告自身（与 build-app.sh 的 BUNDLE_ID 保持一致）
     public static let ownBundleID = "com.acerola.too-much-chrome"
+
+    /// Application Support 根（测试可注入临时目录，避免触碰真实用户数据）
+    static var appSupportRoot: URL = FileManager.default
+        .homeDirectoryForCurrentUser.appendingPathComponent("Library/Application Support")
 
     // MARK: 枚举候选
 
@@ -41,6 +46,10 @@ public enum AppScanner {
     // MARK: 单应用检测
 
     public static func detect(at url: URL) -> DetectedApp? {
+        detect(at: url, followRelocation: true)
+    }
+
+    private static func detect(at url: URL, followRelocation: Bool) -> DetectedApp? {
         let fm = FileManager.default
         let contentsURL = url.appendingPathComponent("Contents")
         let frameworksURL = contentsURL.appendingPathComponent("Frameworks")
@@ -148,6 +157,54 @@ public enum AppScanner {
             return build(.wails, version: score?.wailsVersion ?? appVersion, status: .unknown)
         }
 
+        // 引导壳回退（Steam 最典型）：/Applications 里只有微型引导器，
+        // 真实客户端自更新到 ~/Library/Application Support/<名>/<名>.AppBundle/，
+        // 包根甚至不带 .app 后缀（Steam 即裸目录 Steam/）——本层特征全空时下钻再检
+        if followRelocation,
+           let relocated = relocatedBundle(for: name, bundleID: bundleID),
+           let inner = detect(at: relocated.root, followRelocation: false) {
+            // 数据口径修正：数据目录包含客户端本体（与 bodyBytes 重复计）
+            // 与 steamapps 游戏安装内容（非 Chrome 内核，动辄数十 GB），均扣除
+            let data = userDataBytes(
+                bundleID: inner.bundleID, name: inner.name,
+                excluding: [
+                    relocated.root.deletingLastPathComponent(),
+                    relocated.support.appendingPathComponent("steamapps")
+                ]
+            )
+            return DetectedApp(
+                name: inner.name,
+                path: inner.path,
+                bundleID: inner.bundleID,
+                type: inner.type,
+                version: inner.version,
+                status: inner.status,
+                bodyBytes: inner.bodyBytes,
+                dataBytes: data
+            )
+        }
+
+        return nil
+    }
+
+    /// 引导壳应用的真实客户端包根及其所在数据目录：
+    /// ~/Library/Application Support/<名>/<名>.AppBundle/ 下任何带 Contents/Info.plist
+    /// 的直接子目录；容器名依次尝试应用名与 Bundle ID
+    private static func relocatedBundle(for name: String, bundleID: String?) -> (root: URL, support: URL)? {
+        var dirNames = [name]
+        if let bid = bundleID, !dirNames.contains(bid) { dirNames.append(bid) }
+        let fm = FileManager.default
+        for dirName in dirNames {
+            let support = appSupportRoot.appendingPathComponent(dirName)
+            let container = support.appendingPathComponent("\(dirName).AppBundle")
+            guard let entries = try? fm.contentsOfDirectory(atPath: container.path) else { continue }
+            for entry in entries.sorted() {
+                let root = container.appendingPathComponent(entry)
+                if fm.fileExists(atPath: root.appendingPathComponent("Contents/Info.plist").path) {
+                    return (root, support)
+                }
+            }
+        }
         return nil
     }
 
@@ -290,8 +347,10 @@ public enum AppScanner {
 
     /// ~/Library 下用户数据：Application Support / Caches / Containers，
     /// 以及 WebKit（WKWebView 数据，Tauri/Wails 的主要落盘处）、
-    /// Saved Application State、Logs；按 bundle id 与应用名双重匹配并去重
-    static func userDataBytes(bundleID: String?, name: String) -> Int64 {
+    /// Saved Application State、Logs；按 bundle id 与应用名双重匹配并去重。
+    /// excluding：位于数据目录内但不属于"用户数据"的子目录（如引导壳应用的
+    /// 客户端本体、游戏安装内容），统计时扣除
+    static func userDataBytes(bundleID: String?, name: String, excluding: [URL] = []) -> Int64 {
         let home = FileManager.default.homeDirectoryForCurrentUser
         var candidates: [URL] = []
         if let bid = bundleID, !bid.isEmpty {
@@ -318,7 +377,14 @@ public enum AppScanner {
             guard seen.insert(std).inserted else { continue }
             var isDir: ObjCBool = false
             guard fm.fileExists(atPath: std.path, isDirectory: &isDir), isDir.boolValue else { continue }
-            total += directorySize(std)
+            var part = directorySize(std)
+            for excluded in excluding {
+                let ex = excluded.standardizedFileURL
+                if ex.path.hasPrefix(std.path + "/"), fm.fileExists(atPath: ex.path) {
+                    part -= directorySize(ex)
+                }
+            }
+            total += part
         }
         return total
     }
