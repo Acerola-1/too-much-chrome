@@ -1,45 +1,64 @@
 import XCTest
 @testable import TooMuchChromeCore
 
-/// 版本带判定回归测试：厂商塞入的应用版本应判"未知"而非"老旧"（2026-08 校准锚）
+/// 版本带判定回归测试。
+/// 内置锚：Electron 44 / Chromium 152（2026-09 校准：npm registry 与 Google VersionHistory 实查）
 final class VersionBandsTests: XCTestCase {
 
-    // MARK: Electron（锚定 latest = 43，2026-08）
+    // MARK: Electron（锚 44 → 当前 ≥42 · 正常 ≥37 · 建议更新 ≥32 · 更早老旧）
 
     func testElectronCurrentBand() {
-        XCTAssertEqual(VersionBands.electronStatus("43.4.0"), .current)
-        XCTAssertEqual(VersionBands.electronStatus("41.0.0"), .current)
+        XCTAssertEqual(VersionBands.electronStatus("44.3.0"), .current)
+        XCTAssertEqual(VersionBands.electronStatus("42.0.0"), .current)
     }
 
     func testElectronOkBand() {
-        XCTAssertEqual(VersionBands.electronStatus("40.2.1"), .ok)
-        XCTAssertEqual(VersionBands.electronStatus("36.0.0"), .ok)
+        XCTAssertEqual(VersionBands.electronStatus("41.0.0"), .ok)
+        XCTAssertEqual(VersionBands.electronStatus("37.0.0"), .ok)
     }
 
     func testElectronAgingAndOutdatedBands() {
         XCTAssertEqual(VersionBands.electronStatus("35.1.4"), .aging)
-        XCTAssertEqual(VersionBands.electronStatus("31.0.0"), .aging)
-        XCTAssertEqual(VersionBands.electronStatus("30.4.0"), .outdated)
+        XCTAssertEqual(VersionBands.electronStatus("32.0.0"), .aging)
+        XCTAssertEqual(VersionBands.electronStatus("31.0.0"), .outdated)
         XCTAssertEqual(VersionBands.electronStatus("22.0.0"), .outdated)
-        // <20 的版本号触发合理性防线 → 未知
-        XCTAssertEqual(VersionBands.electronStatus("11.5.0"), .unknown)
     }
 
-    // MARK: 厂商污染版本号 → 未知（不许误判"老旧"）
+    // MARK: 老版本 Electron 不能被当成"版本号被污染"
+
+    /// aTrust 的框架 plist 写 11.5.0——那是**真实**的 Electron 11（Chromium 87，实测 UA 串佐证）。
+    /// 旧实现用"大版本 ≥20"当合理性防线，把它误判成"未知"，等于把明显该更新的引擎放过了
+    func testGenuinelyOldElectronJudgedOutdatedNotUnknown() {
+        XCTAssertEqual(VersionBands.electronStatus("11.5.0"), .outdated)
+        XCTAssertEqual(VersionBands.electronStatus("1.2.3"), .outdated)
+    }
+
+    // MARK: 框架 plist 写成 Chromium 方案 → 按 Chromium 分档
+
+    /// ChatGPT 的框架被改名后版本写成 "152.0.7977.83"。152 不是 Electron 大版本，
+    /// 拿它比 Electron 锚点只是碰巧也对，得改走 Chromium 阈值才自洽
+    func testChromiumSchemeVersionInsideElectronFramework() {
+        XCTAssertEqual(VersionBands.electronStatus("152.0.7977.83"), .current)
+        XCTAssertEqual(VersionBands.electronStatus("120.0.0"), .outdated)
+    }
+
+    // MARK: CEF/Chromium 版本号被污染 → 未知（不许误判"老旧"）
 
     func testVendorStampedVersionIsUnknown() {
-        // NeteaseMusic 把应用版本 3.1.10 塞进 CEF 框架 plist；aTrust 塞 11.5.0
+        // 网易云把应用版本 3.1.11 塞进 CEF 框架 plist；低于 Chromium 可信下限即拒收，
+        // 交由 AppScanner 用框架二进制里的 UA 串兜底
         XCTAssertEqual(VersionBands.chromiumStatus("3.1.10"), .unknown)
-        XCTAssertEqual(VersionBands.electronStatus("1.2.3"), .unknown)
         XCTAssertEqual(VersionBands.electronStatus(nil), .unknown)
         XCTAssertEqual(VersionBands.electronStatus(""), .unknown)
+        XCTAssertEqual(VersionBands.electronStatus("0.0.0"), .unknown)
     }
 
-    // MARK: CEF / Chromium（锚定 latest = 151，2026-08）
+    // MARK: CEF / Chromium（锚 152 → 当前 ≥149 · 正常 ≥140 · 建议更新 ≥129 · 更早老旧）
 
     func testChromiumBands() {
-        XCTAssertEqual(VersionBands.chromiumStatus("151.0.7922"), .current)
-        XCTAssertEqual(VersionBands.chromiumStatus("148.0.0"), .current)
+        XCTAssertEqual(VersionBands.chromiumStatus("152.0.7977"), .current)
+        XCTAssertEqual(VersionBands.chromiumStatus("149.0.0"), .current)
+        XCTAssertEqual(VersionBands.chromiumStatus("148.0.0"), .ok)
         XCTAssertEqual(VersionBands.chromiumStatus("142.0.57.02"), .ok)
         XCTAssertEqual(VersionBands.chromiumStatus("138.0.0"), .aging)
         XCTAssertEqual(VersionBands.chromiumStatus("120.0.0"), .outdated)
@@ -57,7 +76,7 @@ final class VersionBandsTests: XCTestCase {
     // MARK: 动态基准（在线 latestMajor 覆盖内置锚）
 
     func testElectronDynamicBaseline() {
-        // 内置锚 43：40 属 ok；换在线锚 45：40 仍 ok、44 变 current、37 变 aging
+        // 内置锚 44：40 属 ok；换在线锚 45：40 仍 ok、44 变 current、37 变 aging
         XCTAssertEqual(VersionBands.electronStatus("40.0.0"), .ok)
         XCTAssertEqual(VersionBands.electronStatus("40.0.0", latestMajor: 45), .ok)
         XCTAssertEqual(VersionBands.electronStatus("44.0.0", latestMajor: 45), .current)

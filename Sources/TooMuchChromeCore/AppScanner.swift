@@ -1,10 +1,12 @@
 import Foundation
 
 // MARK: - 扫描器
-// 检测分层见 detection-strategy.md：Tier 1 Electron/CEF/NW.js（框架特征，高准确率）、
-// Tier 3 完整浏览器（名称 / Bundle ID）、Tier 2 Tauri/Wails（关键词，实验性）、
-// Tier 4 未知 WebView 默认关闭（误报风险高）。
-// 扫描路径：/Applications 与 ~/Applications（顶层 .app）；
+// 检测分层见 detection-strategy.md：
+//   Tier 1  Electron / CEF / NW.js（框架身份特征）+ 重命名引擎兜底（app.asar / 内嵌 Chromium UA）
+//   Tier 3  完整浏览器（名称 / Bundle ID）
+//   Tier 2  Tauri / Wails / Flutter WebView（关键词与二进制特征，实验性）
+//   Tier 4  系统 WebView（WKWebView 承载 + 独立前端资源，实验性）
+// 扫描路径：/Applications 与 ~/Applications 下两层 .app；
 // 引导壳应用（如 Steam）的真实客户端在 ~/Library/Application Support 内，detect 时回退下钻
 
 public enum AppScanner {
@@ -17,31 +19,266 @@ public enum AppScanner {
     static var appSupportRoot: URL = FileManager.default
         .homeDirectoryForCurrentUser.appendingPathComponent("Library/Application Support")
 
+    /// 扫描根（测试可注入临时目录）
+    static var scanRoots: [URL] = [
+        URL(fileURLWithPath: "/Applications"),
+        FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Applications")
+    ]
+
     // MARK: 枚举候选
 
+    /// 扫描根下**两层**枚举 .app：顶层，以及直接子目录内的应用
+    /// （/Applications/Utilities/、~/Applications/<浏览器> Apps.localized/ 里 PWA 快捷方式）。
+    /// 不进入 .app 内部——那里是 helper 子应用，不是独立安装的应用
     public static func candidateURLs() -> [URL] {
         let fm = FileManager.default
-        let dirs = [
-            URL(fileURLWithPath: "/Applications"),
-            fm.homeDirectoryForCurrentUser.appendingPathComponent("Applications")
-        ]
         var seen = Set<URL>()
         var urls: [URL] = []
-        for dir in dirs {
-            guard let en = fm.enumerator(
-                at: dir,
-                includingPropertiesForKeys: [.isDirectoryKey],
-                options: [.skipsSubdirectoryDescendants, .skipsHiddenFiles]
-            ) else { continue }
-            for case let url as URL in en {
-                guard url.pathExtension == "app" else { continue }
-                let std = url.standardizedFileURL
-                guard seen.insert(std).inserted else { continue }
-                urls.append(url)
+
+        func collect(_ url: URL) {
+            guard url.pathExtension == "app" else { return }
+            let std = url.standardizedFileURL
+            guard seen.insert(std).inserted else { return }
+            urls.append(url)
+        }
+
+        func entries(of dir: URL) -> [URL] {
+            (try? fm.contentsOfDirectory(
+                at: dir, includingPropertiesForKeys: [.isDirectoryKey], options: [.skipsHiddenFiles]
+            )) ?? []
+        }
+
+        for dir in scanRoots {
+            for entry in entries(of: dir) {
+                if entry.pathExtension == "app" {
+                    collect(entry)
+                    continue
+                }
+                guard (try? entry.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory == true
+                else { continue }
+                for sub in entries(of: entry) { collect(sub) }
             }
         }
         return urls.sorted { $0.lastPathComponent.localizedCaseInsensitiveCompare($1.lastPathComponent) == .orderedAscending }
     }
+
+    // MARK: 框架枚举
+
+    /// 一个候选引擎框架：框架根、主二进制、主二进制体积。
+    /// binary 为 nil 表示只有框架目录、解析不出主二进制（不完整/待更新的包）——
+    /// 此时仍按名称与 plist 判定家族，只是拿不到二进制里的版本兜底信息
+    struct FrameworkRef {
+        let root: URL
+        let binary: URL?
+        let bytes: Int
+    }
+
+    /// Contents 下的引擎框架，按主二进制体积降序。
+    /// 除 Contents/Frameworks 外还包含 Contents/<子目录>/<子应用>.app/Contents/Frameworks：
+    /// 微信的 Chromium 内核（XWeb）在 Contents/MacOS/WeChatAppEx.app 内，顶层 Frameworks
+    /// 最大的只是 50MB 级业务动态库——只看顶层会整片漏掉
+    static func frameworks(in contentsURL: URL) -> [FrameworkRef] {
+        let fm = FileManager.default
+        var roots = [contentsURL.appendingPathComponent("Frameworks")]
+
+        let topLevel = (try? fm.contentsOfDirectory(
+            at: contentsURL, includingPropertiesForKeys: [.isDirectoryKey], options: [.skipsHiddenFiles]
+        )) ?? []
+        for entry in topLevel where entry.lastPathComponent != "Frameworks" {
+            guard (try? entry.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory == true,
+                  let subs = try? fm.contentsOfDirectory(
+                    at: entry, includingPropertiesForKeys: [.isDirectoryKey], options: [.skipsHiddenFiles])
+            else { continue }
+            for sub in subs where sub.pathExtension == "app" {
+                roots.append(sub.appendingPathComponent("Contents/Frameworks"))
+            }
+        }
+
+        var out: [FrameworkRef] = []
+        for root in roots {
+            for name in (try? fm.contentsOfDirectory(atPath: root.path)) ?? [] where name.hasSuffix(".framework") {
+                let base = String(name.dropLast(".framework".count))
+                let fw = root.appendingPathComponent(name)
+                // 框架根的同名文件是指向 Versions/Current/<名> 的符号链接，两条路径都试
+                let binary = [
+                    fw.appendingPathComponent(base),
+                    fw.appendingPathComponent("Versions/Current/\(base)")
+                ].first { fm.fileExists(atPath: $0.path) }
+                out.append(FrameworkRef(root: fw, binary: binary, bytes: binary.map(fileSize) ?? 0))
+            }
+        }
+        return out.sorted { $0.bytes > $1.bytes }
+    }
+
+    /// 框架 plist 声明的版本（短版本优先，退回 build 号）
+    static func declaredVersion(_ fw: FrameworkRef) -> String? {
+        guard let info = Bundle(path: fw.root.path)?.infoDictionary else { return nil }
+        let short = info["CFBundleShortVersionString"] as? String
+        let build = info["CFBundleVersion"] as? String
+        return [short, build].compactMap { $0 }.first { !$0.isEmpty }
+    }
+
+    /// 框架 plist 的 Bundle ID——改名构建（如 QQ 的 QQNT.framework、
+    /// ChatGPT 的 Codex Framework.framework）仍可能保留 com.github.Electron.framework
+    static func frameworkBundleID(_ fw: FrameworkRef) -> String? {
+        Bundle(path: fw.root.path)?.infoDictionary?["CFBundleIdentifier"] as? String
+    }
+
+    // MARK: 引擎特征
+
+    /// 内嵌 Chromium 引擎的框架主二进制体积下限。真实引擎是 100MB 量级
+    /// （实测最小 128MB）；20MB 仅供排除小框架，避免无谓地映射大文件。
+    /// 测试会下调此值以免造出几十 MB 的夹具
+    static var engineFrameworkMinBytes = 20 * 1024 * 1024
+
+    /// 引擎框架二进制读取上限（实测最大约 400MB）
+    static let engineScanMaxBytes = 768 * 1024 * 1024
+
+    /// Electron 版本：框架 plist 的版本落在 Electron 合理区间（1…锚+20）才采信。
+    /// Electron 11（Chromium 87）这类老版本真实存在（实测 aTrust），不能因为小就丢弃；
+    /// 超出区间说明写的是 Chromium 方案（实测 ChatGPT 的 "152.0.7977.83"）→ 用 UA 兜底
+    static func electronVersion(declared: String?, framework: FrameworkRef) -> String? {
+        if let m = VersionBands.major(declared),
+           m >= 1, m <= VersionBands.builtInElectronMajor + VersionBands.electronMajorHeadroom {
+            return declared
+        }
+        return framework.binary.flatMap { uaVersion(in: $0) }
+    }
+
+    /// CEF/Chromium 版本：框架 plist 常被厂商写成应用版本
+    /// （实测网易云 "3.1.11" 而真实内核 116），低于可信下限时用 UA 兜底。
+    /// 提不到就返回 nil——判"未知"，而不是拿厂商版本号去比 Chromium 锚点误报"老旧"
+    static func chromiumVersion(declared: String?, framework: FrameworkRef) -> String? {
+        if let m = VersionBands.major(declared), m >= VersionBands.chromiumMajorFloor {
+            return declared
+        }
+        return framework.binary.flatMap { uaVersion(in: $0) }
+    }
+
+    /// 框架二进制内嵌的 Chromium UA 版本——即该框架实际携带的 Chromium 内核版本
+    static func uaVersion(in binary: URL) -> String? {
+        guard let data = mappedFile(binary, maxBytes: engineScanMaxBytes) else { return nil }
+        return runtimeVersion(in: data, prefixes: ["Chrome/"])
+    }
+
+    /// Tier 1a：引擎框架的身份特征——目录名，或框架 plist 的 Bundle ID
+    static func namedEngineHit(frameworks: [FrameworkRef]) -> (type: AppType, version: String?)? {
+        for fw in frameworks {
+            let lowered = fw.root.lastPathComponent.lowercased()
+            if lowered.contains("electron framework")
+                || frameworkBundleID(fw)?.lowercased() == "com.github.electron.framework" {
+                return (.electron, electronVersion(declared: declaredVersion(fw), framework: fw))
+            }
+            if lowered.contains("chromium embedded") {
+                return (.cef, chromiumVersion(declared: declaredVersion(fw), framework: fw))
+            }
+            if lowered.contains("nwjs") {
+                return (.nwjs, nil)
+            }
+        }
+        return nil
+    }
+
+    /// 引擎家族标记。全机普查：11 个真 Electron 框架的 `electron_browser` 命中 3–42、
+    /// `ELECTRON_` 命中 6–27，两个真 CEF 框架的 `libcef` 命中 8–12、`CefBrowser` 命中 2–4，
+    /// 两组互不误报。据此可把"带 Node"当成 Electron 的旧推理纠正掉——
+    /// 微信 XWeb 三组标记全为 0，是腾讯自研的 Chromium 派生内核，既非 Electron 也非 CEF
+    static let electronMarkers = ["electron_browser", "ELECTRON_"]
+    static let cefMarkers = ["libcef", "CefBrowser"]
+
+    static func engineFamily(in data: Data) -> AppType {
+        if electronMarkers.contains(where: { dataContains(data, $0) }) { return .electron }
+        if cefMarkers.contains(where: { dataContains(data, $0) }) { return .cef }
+        return .vendorChromium
+    }
+
+    /// Tier 1b：重命名引擎兜底——框架名与 Bundle ID 都是厂商自有的构建，
+    /// 只剩框架二进制自身可辨。先按家族标记定家族、用内嵌 `Chrome/x.y.z.w` UA 串定内核版本：
+    /// - Electron（实测 ChatGPT：Codex Framework.framework / com.openai.codex.framework）
+    /// - 自研内核（实测微信 XWeb：WeChatAppEx Framework / com.tencent.flue.framework，内核 144）
+    static func rebrandedEngineHit(
+        frameworks: [FrameworkRef], contentsURL: URL
+    ) -> (type: AppType, version: String?)? {
+        for fw in frameworks where fw.bytes >= engineFrameworkMinBytes {
+            guard let binary = fw.binary,
+                  let data = mappedFile(binary, maxBytes: engineScanMaxBytes),
+                  let ua = runtimeVersion(in: data, prefixes: ["Chrome/"])
+            else { continue }
+            return (engineFamily(in: data), ua)
+        }
+
+        // 家族标记与 UA 都读不到时的最后兜底：app.asar 是 Electron 打包应用代码的档案。
+        // 此时无从查证家族，按 Electron 记（asar 属 Electron 生态的默认假设，已在文档标注）
+        if FileManager.default.fileExists(
+            atPath: contentsURL.appendingPathComponent("Resources/app.asar").path
+        ) {
+            return (.electron, frameworks.first.flatMap {
+                electronVersion(declared: declaredVersion($0), framework: $0)
+            })
+        }
+        return nil
+    }
+
+    // MARK: Tier 4：系统 WebView
+
+    /// 前端入口 HTML 文件名
+    static let frontendEntryNames: Set<String> = ["index.html", "main.html", "app.html"]
+
+    /// 文档目录名——帮助文档也常以 index.html 分发（实测 LibreOffice 的 Resources/help/）
+    static let documentationDirNames: Set<String> = [
+        "help", "docs", "documentation", "manual", "guide",
+        "samples", "examples", "demos", "templates"
+    ]
+
+    /// 主二进制是否链接 WebKit.framework。Mach-O 的 LC_LOAD_DYLIB 原样保存安装路径，
+    /// 故字符串命中与 `otool -L` 结果逐应用核对一致，无需起子进程
+    static func linksWebKit(at url: URL) -> Bool {
+        guard let data = mappedBinary(at: url) else { return false }
+        return dataContains(data, "WebKit.framework/Versions")
+    }
+
+    /// 宿主是否携带 Safari App Extension。扩展的网页由 Safari 加载，不在宿主的 WebView 里，
+    /// 这类容器的 Main.html 是扩展弹窗而非应用界面（实测 Microsoft Rewards for Safari、
+    /// Doubao Extension 都是这种容器，且都带 Main.html + Script.js + Style.css）
+    static func hostsAppExtension(contentsURL: URL) -> Bool {
+        let plugins = contentsURL.appendingPathComponent("PlugIns")
+        let entries = (try? FileManager.default.contentsOfDirectory(
+            at: plugins, includingPropertiesForKeys: [.isDirectoryKey], options: [.skipsHiddenFiles]
+        )) ?? []
+        return entries.contains { $0.pathExtension == "appex" }
+    }
+
+    /// Contents/Resources 及其一级子目录内是否有前端入口 HTML
+    static func hasFrontendResources(contentsURL: URL) -> Bool {
+        let fm = FileManager.default
+
+        func scan(_ dir: URL, allowNested: Bool) -> Bool {
+            let entries = (try? fm.contentsOfDirectory(
+                at: dir, includingPropertiesForKeys: [.isDirectoryKey], options: [.skipsHiddenFiles]
+            )) ?? []
+            for entry in entries {
+                let isDir = (try? entry.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory == true
+                guard isDir else {
+                    if frontendEntryNames.contains(entry.lastPathComponent.lowercased()) { return true }
+                    continue
+                }
+                guard allowNested,
+                      !documentationDirNames.contains(entry.lastPathComponent.lowercased())
+                else { continue }
+                if scan(entry, allowNested: false) { return true }
+            }
+            return false
+        }
+        return scan(contentsURL.appendingPathComponent("Resources"), allowNested: true)
+    }
+
+    // MARK: Tier 2：Flutter WebView
+
+    /// Flutter 的 macOS WebView 插件。Flutter 本身是自绘渲染，只有引入这类插件才承载网页；
+    /// 纯 Flutter 应用（如终端、工具类）不算 Web 技术应用，故要求插件在架
+    static let flutterWebViewPlugins = [
+        "inappwebview", "webview_flutter", "desktop_webview_window", "flutter_webview"
+    ]
 
     // MARK: 单应用检测
 
@@ -52,9 +289,6 @@ public enum AppScanner {
     private static func detect(at url: URL, followRelocation: Bool) -> DetectedApp? {
         let fm = FileManager.default
         let contentsURL = url.appendingPathComponent("Contents")
-        let frameworksURL = contentsURL.appendingPathComponent("Frameworks")
-        let frameworkNames = (try? fm.contentsOfDirectory(atPath: frameworksURL.path)) ?? []
-        let lowered = frameworkNames.map { $0.lowercased() }
 
         let plist = Bundle(url: url)?.infoDictionary ?? [:]
         let name = (plist["CFBundleDisplayName"] as? String)
@@ -68,21 +302,6 @@ public enum AppScanner {
         }
         let appVersion = (plist["CFBundleShortVersionString"] as? String)
             ?? (plist["CFBundleVersion"] as? String)
-
-        func frameworkVersion(_ index: Int) -> String? {
-            guard let bundle = Bundle(path: frameworksURL.appendingPathComponent(frameworkNames[index]).path),
-                  let info = bundle.infoDictionary else { return nil }
-            let short = info["CFBundleShortVersionString"] as? String
-            let build = info["CFBundleVersion"] as? String
-            return [short, build].compactMap { $0 }.first { !$0.isEmpty }
-        }
-
-        /// 框架 plist 的 Bundle ID——改名构建（如 QQ 的 QQNT.framework）
-        /// 仍保留 com.github.Electron.framework，是目录名之外的第二特征
-        func frameworkBundleID(_ index: Int) -> String? {
-            Bundle(path: frameworksURL.appendingPathComponent(frameworkNames[index]).path)?
-                .infoDictionary?["CFBundleIdentifier"] as? String
-        }
 
         func build(_ type: AppType, version: String?, status: VersionStatus) -> DetectedApp {
             // 体积统计只对命中应用执行，避免给无关应用做昂贵递归；
@@ -103,37 +322,36 @@ public enum AppScanner {
             )
         }
 
-        // Tier 1：自带 Chromium 内核的框架
-        // Electron 双特征：目录名（标准构建）或框架 plist Bundle ID
-        // （com.github.Electron.framework，改名构建仍保留）
-        let electronIndex = lowered.firstIndex(where: { $0.contains("electron framework") })
-            ?? lowered.indices.first {
-                frameworkBundleID($0)?.lowercased() == "com.github.electron.framework"
-            }
-        if let i = electronIndex {
-            let v = frameworkVersion(i)
-            return build(.electron, version: v, status: VersionBands.electronStatus(v))
+        func hit(_ type: AppType, _ version: String?) -> DetectedApp {
+            build(type, version: version, status: VersionBands.status(for: type, version: version, latest: nil))
         }
-        if let i = lowered.firstIndex(where: { $0.contains("chromium embedded") }) {
-            let v = frameworkVersion(i)   // CEF 版本 ≈ Chromium 版本
-            return build(.cef, version: v, status: VersionBands.chromiumStatus(v))
-        }
-        if lowered.contains(where: { $0.contains("nwjs") }) {
-            return build(.nwjs, version: appVersion, status: .unknown)
+
+        let frameworks = frameworks(in: contentsURL)
+
+        // Tier 1a：自带 Chromium 内核的引擎框架（含保留 Electron Bundle ID 的改名构建）
+        if let engine = namedEngineHit(frameworks: frameworks) {
+            return hit(engine.type, engine.version)
         }
 
         // Tier 3：完整浏览器（仅列出）
         // Chromium 系浏览器的应用主版本与内核主版本对齐（Edge 79+ / Chrome / Opera / Vivaldi）；
-        // 版本方案不对齐的（如 Arc 的 1.x）从主二进制的 "Chrome/x.y.z.w" UA 串兜底提取
+        // 版本方案不对齐的（如 Arc 的 1.x）从主二进制的 "Chrome/x.y.z.w" UA 串兜底提取。
+        // 必须排在重命名引擎兜底之前——Edge 框架里嵌的是过期的 Chrome/70 UA 串，
+        // 先走 UA 会把浏览器误判成 Electron
         if isBrowser(name: name, bundleID: bundleID) {
             var engineVersion = appVersion
-            if (VersionBands.major(appVersion) ?? 0) < 20 {
+            if (VersionBands.major(appVersion) ?? 0) < VersionBands.chromiumMajorFloor {
                 if let mapped = mappedBinary(at: url),
-                   let ua = AppScanner.runtimeVersion(in: mapped, prefixes: ["Chrome/"]) {
+                   let ua = runtimeVersion(in: mapped, prefixes: ["Chrome/"]) {
                     engineVersion = ua
                 }
             }
-            return build(.browser, version: engineVersion, status: VersionBands.chromiumStatus(engineVersion))
+            return hit(.browser, engineVersion)
+        }
+
+        // Tier 1b：重命名引擎兜底（app.asar / 内嵌 Chromium UA）
+        if let engine = rebrandedEngineHit(frameworks: frameworks, contentsURL: contentsURL) {
+            return hit(engine.type, engine.version)
         }
 
         // Tier 2：系统 WebView 框架（实验性）
@@ -151,10 +369,21 @@ public enum AppScanner {
             }
         }
         if tauriHit {
-            return build(.tauri, version: score?.tauriVersion ?? appVersion, status: .unknown)
+            return hit(.tauri, score?.tauriVersion ?? appVersion)
         }
         if wailsHit {
-            return build(.wails, version: score?.wailsVersion ?? appVersion, status: .unknown)
+            return hit(.wails, score?.wailsVersion ?? appVersion)
+        }
+
+        // Tier 2b：Flutter + WebView 插件
+        let frameworkEntries = (try? fm.contentsOfDirectory(
+            atPath: contentsURL.appendingPathComponent("Frameworks").path)) ?? []
+        let loweredEntries = frameworkEntries.map { $0.lowercased() }
+        if loweredEntries.contains("fluttermacos.framework"),
+           loweredEntries.contains(where: { entry in
+               flutterWebViewPlugins.contains { entry.contains($0) }
+           }) {
+            return hit(.flutter, appVersion)
         }
 
         // 引导壳回退（Steam 最典型）：/Applications 里只有微型引导器，
@@ -182,6 +411,17 @@ public enum AppScanner {
                 bodyBytes: inner.bodyBytes,
                 dataBytes: data
             )
+        }
+
+        // Tier 4：系统 WebView——链接 WebKit 且带独立前端资源。
+        // 单看"链接了 WebKit"误报面太大（本机 80 个应用里 23 个命中，绝大多数
+        // 只是拿 WebKit 做局部功能，如邮件预览、内嵌帮助）；加上"有前端入口 HTML"
+        // 之后只剩真正的 WebView 承载型（实测 Typora：Resources/TypeMark/index.html）；
+        // 再排掉 Safari 扩展宿主——它们的网页归 Safari 加载，不算应用自带的 WebView
+        if !hostsAppExtension(contentsURL: contentsURL),
+           linksWebKit(at: url),
+           hasFrontendResources(contentsURL: contentsURL) {
+            return hit(.systemWebView, appVersion)
         }
 
         return nil
@@ -256,13 +496,32 @@ public enum AppScanner {
     static func mappedBinary(at url: URL) -> Data? {
         guard let plist = Bundle(url: url)?.infoDictionary,
               let executable = plist["CFBundleExecutable"] as? String else { return nil }
-        let binaryURL = url.appendingPathComponent("Contents/MacOS/\(executable)")
-        guard let attrs = try? FileManager.default.attributesOfItem(atPath: binaryURL.path),
-              let size = attrs[.size] as? Int,
-              size > 0, size <= 256 * 1024 * 1024,
-              let data = try? Data(contentsOf: binaryURL, options: .mappedIfSafe)
-        else { return nil }
-        return data
+        return mappedFile(
+            url.appendingPathComponent("Contents/MacOS/\(executable)"),
+            maxBytes: 256 * 1024 * 1024
+        )
+    }
+
+    /// 文件真实体积。`attributesOfItem` 不跟随符号链接——框架根的同名文件是符号链接，
+    /// 直接量会得到链接自身的 32 字节，把 300MB 的引擎判成小文件，
+    /// 于是"体积 ≥20MB 才读"的引擎兜底永远不会触发
+    static func fileSize(_ url: URL) -> Int {
+        let target = url.resolvingSymlinksInPath()
+        return (try? FileManager.default.attributesOfItem(atPath: target.path))?[.size] as? Int ?? 0
+    }
+
+    /// mmap 读取文件；超过 maxBytes 或读不到则返回 nil
+    static func mappedFile(_ url: URL, maxBytes: Int) -> Data? {
+        let target = url.resolvingSymlinksInPath()
+        let size = fileSize(target)
+        guard size > 0, size <= maxBytes else { return nil }
+        return try? Data(contentsOf: target, options: .mappedIfSafe)
+    }
+
+    /// 字节流内是否含指定字符串
+    static func dataContains(_ data: Data, _ needle: String) -> Bool {
+        let needle = Data(needle.utf8)
+        return data.range(of: needle, options: [], in: data.startIndex..<data.endIndex) != nil
     }
 
     private static func binaryKeywordScore(at url: URL) -> BinaryScore? {
