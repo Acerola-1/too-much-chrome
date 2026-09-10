@@ -106,13 +106,16 @@ fi
 
 # Sparkle.framework 内嵌的 Autoupdate / Updater.app / XPC 自带 ad-hoc 签名，
 # 公证会拒绝残留的 ad-hoc 签名，必须由叶到根重签（不用 --deep，参照 Sparkle 官方文档）
+#
+# adhoc 签名**不能**叠加 hardened runtime：adhoc 没有 Team ID，而 hardened runtime 会启用
+# library validation，dyld 逐个子库比对 Team ID 时必然失败——内嵌的 Sparkle.framework 报
+# "mapping process and mapped file (non-platform) have different Team IDs"，应用直接起不来。
+# Developer ID 路径的 Team ID 一致，照常带 hardened runtime。
 sign_sparkle() {
   local identity="$1"
   local fw="$APP/Contents/Frameworks/Sparkle.framework/Versions/Current"
   local opts=(--force --sign "$identity")
-  if [[ "$identity" == "-" ]]; then
-    opts+=(--options runtime)
-  else
+  if [[ "$identity" != "-" ]]; then
     opts+=(--timestamp --options runtime --preserve-metadata=identifier,entitlements,flags)
   fi
   codesign "${opts[@]}" "$fw/XPCServices/Installer.xpc"
@@ -125,7 +128,7 @@ sign_sparkle() {
 if [[ "$MODE" == "dev" || "$SIGN_AVAILABLE" -eq 0 ]]; then
   echo "==> adhoc 签名（含 Sparkle 嵌套组件）"
   sign_sparkle "-"
-  codesign --force --sign - --options runtime "$APP"
+  codesign --force --sign - "$APP"
   if [[ "$MODE" == "dev" ]]; then
     pkill -x "$APP_NAME" 2>/dev/null || true
     sleep 0.3
