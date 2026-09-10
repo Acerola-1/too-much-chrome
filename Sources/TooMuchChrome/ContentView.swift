@@ -175,7 +175,7 @@ struct ContentView: View {
             Image(systemName: "checkmark.seal.fill")
                 .font(.system(size: 44))
                 .foregroundStyle(.green.opacity(0.8))
-            Text("未发现基于 WebView 的应用")
+            Text("未发现内嵌 Chromium / WebView 的应用")
                 .font(.system(size: 16, weight: .semibold))
             Text("你的 Mac 很干净，没有偷偷内置 Chromium 的应用")
                 .font(.system(size: 12))
@@ -216,6 +216,7 @@ private struct GlassSegmentedFilter: View {
     private func segment(_ type: AppType?) -> some View {
         let selected = model.filter == type
         let label = type?.label ?? "全部"
+        let full = type?.fullLabel ?? "全部"
         let count = type.flatMap { model.typeCountsAll[$0] } ?? model.apps.count
         return Button {
             select(type)
@@ -232,7 +233,7 @@ private struct GlassSegmentedFilter: View {
         }
         .buttonStyle(.plain)
         .opacity(count == 0 && !selected ? 0.45 : 1)
-        .help(count == 0 ? "\(label)：未检出" : "\(label) · \(count) 个")
+        .help(count == 0 ? "\(full)：未检出" : "\(full) · \(count) 个")
     }
 
     /// 滑块：macOS 26 液态玻璃（glassEffectID 跨段滑动）；低版本强调色胶囊
@@ -395,7 +396,7 @@ private struct AppCellView: View {
         }
         .buttonStyle(.plain)
         .allowsHitTesting(!dimmed)
-        .help("\(app.name) · \(app.type.label) · \(fmtBytes(app.totalBytes))")
+        .help("\(app.name) · \(app.type.fullLabel) · \(fmtBytes(app.totalBytes))")
         .onAppear {
             guard !reduceMotion else { return }
             withAnimation(.easeOut(duration: 0.3)) { appeared = true }

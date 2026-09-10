@@ -48,9 +48,9 @@ final class ScanViewModel {
         case .idle:
             return "尚未扫描"
         case .scanning(let found, _):
-            return "正在扫描… 已发现 \(found) 个 WebView 应用"
+            return "正在扫描… 已发现 \(found) 个内嵌引擎的应用"
         case .done:
-            guard !apps.isEmpty else { return "未发现基于 WebView 的应用 🎉" }
+            guard !apps.isEmpty else { return "未发现内嵌 Chromium / WebView 的应用 🎉" }
             return "已扫描 \(apps.count) 个应用 · \(fmtBytes(totalBytes))"
         }
     }

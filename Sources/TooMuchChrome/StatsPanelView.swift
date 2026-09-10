@@ -42,7 +42,7 @@ struct StatsPanelView: View {
                     .font(.system(size: 15))
                     .foregroundStyle(.secondary)
             }
-            Text("基于 WebView / Chromium 的 macOS 应用")
+            Text("内嵌 Chromium / WebView 引擎的应用")
                 .font(.system(size: 12))
                 .foregroundStyle(.secondary)
         }
