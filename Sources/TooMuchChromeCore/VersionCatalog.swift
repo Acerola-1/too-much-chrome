@@ -37,7 +37,7 @@ public struct VersionBaseline: Codable, Equatable {
             return "在线 \(fmt.string(from: date))"
         }
         if fetchedAt != nil { return "缓存" }
-        return "内置 2026-08"
+        return "内置 2026-09"
     }
 
     public var summaryText: String {
@@ -63,10 +63,14 @@ public enum VersionCatalog {
         return caches.appendingPathComponent("com.acerola.too-much-chrome/baseline.json")
     }
 
-    /// 内置兜底基准（2026-08 校准；仅在从未联网成功时出现）
+    /// 内置兜底基准（2026-09 校准；仅在从未联网成功时出现）。
+    /// Tauri/Wails 也必须给锚——否则离线时这两个类型恒判"未知"，
+    /// 而它们的运行时版本已经从主二进制里提出来了，白白浪费
     public static let builtIn = VersionBaseline(
-        electronMajor: 43,
-        chromiumMajor: 151,
+        electronMajor: 44,
+        chromiumMajor: 152,
+        tauriVersion: "2.11.5",
+        wailsVersion: "2.14.0",
         isOnline: false
     )
 

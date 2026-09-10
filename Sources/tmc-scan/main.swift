@@ -39,10 +39,11 @@ Task.detached(priority: .userInitiated) {
                 "\(app.type.label.padding(toLength: 9, withPad: " ", startingAt: 0))"
                     + "\(statusMark(app)) "
                     + "\(app.name.padding(toLength: 24, withPad: " ", startingAt: 0))"
-                    + "v\((app.version ?? "-").padding(toLength: 10, withPad: " ", startingAt: 0))"
-                    + "\(fmt(app.bodyBytes).padding(toLength: 9, withPad: " ", startingAt: 0))"
+                    // 内核版本可能是四段 UA 串（151.0.4129.61），列宽要放得下
+                    + "v\((app.version ?? "-").padding(toLength: 15, withPad: " ", startingAt: 0))"
+                    + "\(fmt(app.bodyBytes).padding(toLength: 10, withPad: " ", startingAt: 0))"
                     + "本体 "
-                    + "\(fmt(app.dataBytes).padding(toLength: 9, withPad: " ", startingAt: 0))"
+                    + "\(fmt(app.dataBytes).padding(toLength: 10, withPad: " ", startingAt: 0))"
                     + "数据"
             )
         }

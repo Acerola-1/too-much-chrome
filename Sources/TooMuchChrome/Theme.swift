@@ -28,9 +28,14 @@ extension AppType {
         case .electron: Color(red: 0, green: 0.478, blue: 1)        // #007aff
         case .cef:      Color(red: 1, green: 0.62, blue: 0.04)      // #ff9f0a
         case .nwjs:     Color(red: 0.345, green: 0.337, blue: 0.84) // #5856d6
+        // 自研内核用粉色：与既有的蓝/橙/靛/紫/青/深蓝/灰/绿都拉开距离，
+        // 也不与健康度的红点混淆（不同区块，且状态只用小圆点）
+        case .vendorChromium: Color(red: 1, green: 0.392, blue: 0.51) // #ff6482
         case .tauri:    Color(red: 0.545, green: 0.361, blue: 0.965) // #8b5cf6
         case .wails:    Color(red: 0.024, green: 0.714, blue: 0.831) // #06b6d4
+        case .flutter:  Color(red: 0.008, green: 0.337, blue: 0.608) // #02569b（Flutter 品牌蓝）
         case .browser:  Color(red: 0.596, green: 0.596, blue: 0.616) // #98989d
+        case .systemWebView: Color(red: 0.204, green: 0.78, blue: 0.349) // #34c759
         }
     }
 }

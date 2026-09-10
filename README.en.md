@@ -12,8 +12,9 @@
 
 <p align="center">
   Too Much Chrome scans every Chromium / WebView app on your macOS — Electron, CEF, NW.js,
-  Tauri, Wails, and full browsers like Chrome, Edge, and Brave — then measures how much
-  storage they take and how current their engines are. The name is a joke. The scan is serious.
+  Tauri, Wails, Flutter WebView, system WebView, and full browsers like Chrome, Edge, and
+  Brave — then measures how much storage they take and how current their engines are.
+  The name is a joke. The scan is serious.
 </p>
 
 <p align="center">
@@ -50,11 +51,30 @@ version health.
 
 ### Real Scanning
 
-Enumerates top-level `.app` bundles in `/Applications` and `~/Applications`. Electron / CEF /
-NW.js are identified by dual signals — `Contents/Frameworks` directory names and plist Bundle
-IDs — at near 100% accuracy: renamed builds (e.g. QQNT.framework) still keep
-`com.github.Electron.framework` as a second signal. Tauri / Wails use Bundle ID /
-resource-directory keywords plus build-path signatures in the main binary, honestly marked as
+Enumerates `.app` bundles **two levels deep** in `/Applications` and `~/Applications`
+(including `Utilities/` and PWA shortcuts under `<browser> Apps.localized/`), but never
+descends into an `.app` — that is where helper sub-apps live.
+
+Electron / CEF / NW.js are identified by dual signals — framework directory names and plist
+Bundle IDs — at near 100% accuracy: renamed builds (e.g. QQNT.framework) still keep
+`com.github.Electron.framework` as a second signal. Builds that swapped the Bundle ID too
+(e.g. ChatGPT's `Codex Framework`) are resolved by the family markers inside the framework
+binary (`electron_browser` / `ELECTRON_` / `libcef` / `CefBrowser`) plus an embedded
+`Chrome/x.y.z.w` UA string for the engine version. Engine frameworks are not limited to
+`Contents/Frameworks` either — WeChat's XWeb lives inside `Contents/MacOS/WeChatAppEx.app/`,
+so framework discovery descends one level into sub-apps.
+
+Chromium derivatives that are neither get their own **"Self-built engine"** type: WeChat on
+macOS 4.x is a Qt app (`Contents/Resources/wechat.dylib`, 327 MB) whose Chrome comes from the
+bundled mini-program runtime (XWeb, engine 144, 387 MB). It is not an app "built on WebView",
+yet that Chromium is real disk usage — so it is counted, listed as its own category, and
+explained in the detail popover. That is the tool's yardstick: how much Chromium is on your disk.
+
+Tauri / Wails use Bundle ID / resource-directory keywords plus build-path signatures in the
+main binary. Flutter WebView requires both `FlutterMacOS.framework` and a webview plugin
+(plain Flutter renders natively and is not a web-technology app). System WebView requires
+"links WebKit AND ships its own front-end entry HTML", excluding Safari app-extension hosts
+and documentation directories. The last three are inference-based and honestly marked
 experimental.
 
 ### Storage Statistics
@@ -69,6 +89,13 @@ Five-tier status (green → red) judged against an online baseline from official
 Electron via npm registry, Chromium via Google VersionHistory, Tauri via crates.io, Wails via
 Go module proxy. The baseline caches for 24 hours, falls back to cached values per source, and
 finally to built-in anchors — fully usable offline.
+
+A framework plist may hold the vendor's app version rather than the engine version, so
+version trust has rules. For CEF, any major below 20 is rejected outright in favour of the
+real engine version read from the `Chrome/` UA string inside the framework binary (Netease
+Music's plist says 3.1.11 while its engine is 116). Electron is the opposite case: majors are
+legal from 1 upward, so genuinely old builds like Electron 11 must still be reported as
+outdated.
 
 ### Scanline Intro
 

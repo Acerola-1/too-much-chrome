@@ -125,7 +125,7 @@ h2 .sub{display:block;font-size:16px;color:var(--muted);font-weight:400;margin-t
 .feature-card p{font-size:13.5px;color:var(--muted);}
 
 /* ============ 检测分层 ============ */
-.tiers-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:52px;}
+.tiers-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:20px;margin-top:52px;}
 .tier-card{border:1px solid var(--border);border-radius:16px;background:#fff;padding:24px;}
 .tier-card .tier-tag{
   display:inline-block;font-size:11px;font-weight:600;letter-spacing:.04em;
@@ -147,6 +147,10 @@ h2 .sub{display:block;font-size:16px;color:var(--muted);font-weight:400;margin-t
 .footer .links a{font-size:12.5px;color:var(--muted);text-decoration:none;margin-left:18px;}
 .footer .links a:hover{color:var(--link);}
 
+/* 4 列在这个区间会窄到每行只剩二十来个字，提前折成 2×2 */
+@media (max-width:1180px){
+  .tiers-grid{grid-template-columns:repeat(2,1fr);}
+}
 @media (max-width:900px){
   .feature-grid,.tiers-grid{grid-template-columns:repeat(2,1fr);}
   .nav-links{display:none;}

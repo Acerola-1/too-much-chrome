@@ -12,6 +12,12 @@ struct DetailPopoverView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             header
+            if let note = engineNote {
+                Text(note)
+                    .font(.system(size: 11))
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
             Divider()
             storageBreakdown
             Divider()
@@ -20,6 +26,13 @@ struct DetailPopoverView: View {
         }
         .padding(14)
         .frame(width: 280)
+    }
+
+    /// 自研内核的字面说明：这类应用本体往往并非网页应用，只是内嵌了一份 Chromium 运行时。
+    /// 微信就是典型——Qt 原生界面 + 387MB 的小程序内核，用户看到它出现在列表里需要一个理由
+    private var engineNote: String? {
+        guard app.type == .vendorChromium else { return nil }
+        return "该应用本体不是网页应用，而是内嵌了一份 Chromium 派生内核（如小程序运行时）。内核与体积属实，故计入统计。"
     }
 
     // MARK: 头部
@@ -42,8 +55,9 @@ struct DetailPopoverView: View {
                         background: app.type.color.opacity(0.14)
                     )
                     if let version = app.version, !version.isEmpty {
+                        // 只放版本号：类型已在左侧徽章里，重复前缀会让四段式 UA 版本被截断
                         Badge(
-                            text: "\(app.type.label) \(version)",
+                            text: version,
                             foreground: .secondary,
                             background: Color.primary.opacity(0.07)
                         )
