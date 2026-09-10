@@ -37,7 +37,7 @@
     <img class="hero-icon fade-in" src="../images/icon.png" alt="Too Much Chrome icon" width="132" height="132">
     <h1 class="fade-in">Too Much Chrome</h1>
     <p class="tagline fade-in">See how many web-engine apps are hiding on your Mac.</p>
-    <p class="desc fade-in">Too Much Chrome scans every Chromium / WebView app on your macOS — Electron, CEF, NW.js, Tauri, Wails, and full browsers like Chrome, Edge, and Brave — then measures how much storage they take and how current their engines are.</p>
+    <p class="desc fade-in">Too Much Chrome scans every app on your macOS that embeds a Chromium / WebView engine — Electron, CEF, NW.js, self-built engines, Tauri, Wails, Flutter WebView, system WebView, and full browsers like Chrome, Edge, and Brave — then measures how much storage they take and how current their engines are.</p>
     <p class="punchline fade-in">The name is a meme. The scan is dead serious.</p>
     <div class="hero-actions fade-in">
       <a class="btn btn-primary" href="https://github.com/Acerola-1/too-much-chrome/releases/latest" target="_blank" rel="noopener">Download Latest</a>
@@ -105,18 +105,23 @@
     <div class="tiers-grid">
       <div class="tier-card fade-in">
         <span class="tier-tag" style="background:rgba(52,199,89,.14);color:#1a8f3c">Tier 1 · High accuracy</span>
-        <h3>Electron / CEF / NW.js</h3>
-        <p>Identified by a dual fingerprint of framework directory name and Bundle ID, with virtually no misjudgments. Even a renamed framework (e.g. QQNT.framework) cannot hide the com.github.Electron identifier in its Bundle ID.</p>
+        <h3>Electron / CEF / NW.js / Self-built</h3>
+        <p>Identified by a dual fingerprint of framework directory name and Bundle ID, with virtually no misjudgments; a renamed build (QQNT.framework) is still recognised by its Bundle ID, and one that swapped the Bundle ID too (ChatGPT) is resolved by the family markers and Chrome UA string inside the framework binary. Chromium derivatives that are neither get their own category: WeChat is a Qt app whose Chrome comes from a bundled mini-program runtime — not an app "built on WebView", yet that Chromium is real disk usage, so it is counted and labelled as such.</p>
       </div>
       <div class="tier-card fade-in">
         <span class="tier-tag" style="background:rgba(255,159,10,.14);color:#b25000">Tier 2 · Experimental</span>
-        <h3>Tauri / Wails</h3>
-        <p>Neither leaves an obvious framework fingerprint, so they are inferred from Bundle IDs, resource directories, and build-path signatures inside the binary. Wails builds obfuscated with garble remain undetectable — a known limitation, honestly labeled as experimental.</p>
+        <h3>Tauri / Wails / Flutter</h3>
+        <p>None ship their own Chromium engine, so they are inferred from Bundle IDs, resource directories, and build-path signatures inside the binary. Wails builds obfuscated with garble remain undetectable; Flutter requires both FlutterMacOS and a webview plugin — plain Flutter renders natively and is not a web-technology app. Every limitation is labeled as experimental.</p>
       </div>
       <div class="tier-card fade-in">
         <span class="tier-tag" style="background:rgba(142,142,147,.14);color:#6e6e73">Tier 3 · Listed only</span>
         <h3>Full Browsers</h3>
         <p>Browsers such as Chrome, Edge, and Brave are listed as-is, with versions rated against the Chromium baseline. Divergent version schemes are resolved through the UA string embedded in the binary.</p>
+      </div>
+      <div class="tier-card fade-in">
+        <span class="tier-tag" style="background:rgba(142,142,147,.14);color:#6e6e73">Tier 4 · Experimental</span>
+        <h3>System WebView</h3>
+        <p>"Links WebKit" alone would sweep in mail previews and bundled help. So an app must also ship its own front-end entry HTML, and Safari app-extension hosts plus documentation directories are excluded — an extension's pages are loaded by Safari, not by the app's own WebView.</p>
       </div>
     </div>
   </div>
