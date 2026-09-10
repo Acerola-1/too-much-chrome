@@ -12,8 +12,8 @@
 
 <p align="center">
   Too Much Chrome 扫描 macOS 上所有基于 Chromium / WebView 的应用——Electron、CEF、NW.js、
-  Tauri、Wails，以及 Chrome、Edge、Brave 这类完整浏览器——并统计它们占用的存储空间与版本健康度。
-  名字是个梗，扫描是认真的。
+  Tauri、Wails、Flutter WebView、系统 WebView，以及 Chrome、Edge、Brave 这类完整浏览器——
+  并统计它们占用的存储空间与版本健康度。名字是个梗，扫描是认真的。
 </p>
 
 <p align="center">
@@ -47,10 +47,25 @@
 
 ### 真实扫描
 
-枚举 `/Applications` 与 `~/Applications` 顶层 `.app`。Electron / CEF / NW.js 按
-`Contents/Frameworks` 框架目录名与 plist Bundle ID 双特征识别，接近 100% 准确率——
-改名构建（如 QQNT.framework）仍保留 `com.github.Electron.framework`，是目录名之外的第二特征；
-Tauri / Wails 走 Bundle ID / 资源目录关键词与主二进制构建路径特征，实验性标注如实呈现。
+枚举 `/Applications` 与 `~/Applications` 下**两层** `.app`（含 `Utilities/` 与
+`<浏览器> Apps.localized/` 里的 PWA 快捷方式），但不进入 `.app` 内部——那里是 helper 子应用。
+
+Electron / CEF / NW.js 按框架目录名与 plist Bundle ID 双特征识别，接近 100% 准确率——
+改名构建（如 QQNT.framework）仍保留 `com.github.Electron.framework`，是目录名之外的第二特征。
+连 Bundle ID 一起换掉的（如 ChatGPT 的 `Codex Framework`）按框架二进制里的家族标记定家族
+（`electron_browser` / `ELECTRON_` / `libcef` / `CefBrowser`）、内嵌 `Chrome/x.y.z.w` UA 串定内核版本。
+引擎框架也不限于 `Contents/Frameworks`——微信的 XWeb 就在
+`Contents/MacOS/WeChatAppEx.app/` 内，框架枚举会下钻到子应用一层。
+
+两者都不是的 Chromium 派生内核单列为**「自研内核」**类型：微信 macOS 4.x 是 Qt 原生应用
+（`Contents/Resources/wechat.dylib`，327MB），Chrome 来自它内嵌的小程序运行时（XWeb，内核 144、
+387MB）。它不出现在"基于 WebView 的应用"里，但那份 Chromium 是硬盘上的真实占用，因此计入统计、
+单列一类、并在详情弹层说明——这是本工具"你硬盘上有多少 Chromium"的口径。
+
+Tauri / Wails 走 Bundle ID / 资源目录关键词与主二进制构建路径特征；Flutter WebView 要求
+`FlutterMacOS.framework` 与 webview 插件同时在架（纯 Flutter 是自绘渲染，不算 Web 技术应用）；
+系统 WebView 要求"链接 WebKit + 带独立前端入口 HTML"，并排除 Safari 扩展宿主与帮助文档目录。
+后三类均为推断，实验性标注如实呈现。
 
 ### 体积统计
 
@@ -62,6 +77,10 @@ Containers / WebKit / Saved Application State / Logs），按 bundle id 与应�
 按在线版本基准动态分档五档状态（绿 → 红）：Electron 走 npm registry、Chromium 走 Google
 VersionHistory、Tauri 走 crates.io、Wails 走 Go module proxy；缓存 24 小时，单项失败沿用缓存值，
 全部失败退内置锚点，离线照常可用。
+
+框架 plist 里写的可能是厂商的应用版本而非内核版本，因此版本取信有口径：CEF 的大版本低于 20
+一律拒收，改从框架二进制里的 `Chrome/` UA 串取真实内核（实测网易云 plist 写 3.1.11、真实内核
+116）；Electron 则相反，大版本 1 起即合法，Electron 11 这类老版本要照实判"老旧"。
 
 ### 扫描线开场
 

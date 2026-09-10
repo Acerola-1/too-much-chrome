@@ -37,7 +37,7 @@
     <img class="hero-icon fade-in" src="../images/icon.png" alt="Too Much Chrome icon" width="132" height="132">
     <h1 class="fade-in">Too Much Chrome</h1>
     <p class="tagline fade-in">看看你的 Mac 里藏了多少网页引擎应用</p>
-    <p class="desc fade-in">Too Much Chrome 扫描 macOS 上所有基于 Chromium / WebView 的应用——Electron、CEF、NW.js、Tauri、Wails，以及 Chrome、Edge、Brave 这类完整浏览器——并统计它们占用的存储空间与版本健康度。</p>
+    <p class="desc fade-in">Too Much Chrome 扫描 macOS 上所有内嵌 Chromium / WebView 引擎的应用——Electron、CEF、NW.js、自研内核、Tauri、Wails、Flutter WebView、系统 WebView，以及 Chrome、Edge、Brave 这类完整浏览器——并统计它们占用的存储空间与版本健康度。</p>
     <p class="punchline fade-in">名字是个梗，扫描是认真的。</p>
     <div class="hero-actions fade-in">
       <a class="btn btn-primary" href="https://github.com/Acerola-1/too-much-chrome/releases/latest" target="_blank" rel="noopener">下载最新版</a>
@@ -105,18 +105,23 @@
     <div class="tiers-grid">
       <div class="tier-card fade-in">
         <span class="tier-tag" style="background:rgba(52,199,89,.14);color:#1a8f3c">Tier 1 · 高准确率</span>
-        <h3>Electron / CEF / NW.js</h3>
-        <p>以框架目录名与 Bundle ID 双指纹识别，几无误判。即便框架被更名（如 QQNT.framework），Bundle ID 中的 com.github.Electron 标识仍无所遁形。</p>
+        <h3>Electron / CEF / NW.js / 自研内核</h3>
+        <p>以框架目录名与 Bundle ID 双指纹识别，几无误判；改名构建（QQNT.framework）凭 Bundle ID 仍可认出，连 Bundle ID 一起换掉的（ChatGPT）则由框架二进制里的家族标记与 Chrome UA 串判定。既非 Electron 也非 CEF 的 Chromium 派生内核单列一类：微信本体是 Qt 应用，Chrome 来自内嵌的小程序运行时——它不算"基于 WebView 的应用"，但那份 Chromium 是真实占用，故计入并标明。</p>
       </div>
       <div class="tier-card fade-in">
         <span class="tier-tag" style="background:rgba(255,159,10,.14);color:#b25000">Tier 2 · 实验性</span>
-        <h3>Tauri / Wails</h3>
-        <p>两者均无明显的框架指纹，依托 Bundle ID、资源目录与二进制内的构建路径特征推断。经 garble 混淆的 Wails 应用无法识别，这一已知局限如实标注为实验性。</p>
+        <h3>Tauri / Wails / Flutter</h3>
+        <p>均无独立 Chromium 内核，依托 Bundle ID、资源目录与二进制内的构建路径特征推断。经 garble 混淆的 Wails 无法识别；Flutter 需同时具备 FlutterMacOS 与 webview 插件——纯 Flutter 应用是自绘渲染，不算 Web 技术应用。局限如实标注为实验性。</p>
       </div>
       <div class="tier-card fade-in">
         <span class="tier-tag" style="background:rgba(142,142,147,.14);color:#6e6e73">Tier 3 · 仅列出</span>
         <h3>完整浏览器</h3>
         <p>Chrome、Edge、Brave 等浏览器直接列出，版本按 Chromium 基准评估；版本方案特殊者，由二进制内的 UA 字符串补全。</p>
+      </div>
+      <div class="tier-card fade-in">
+        <span class="tier-tag" style="background:rgba(142,142,147,.14);color:#6e6e73">Tier 4 · 实验性</span>
+        <h3>系统 WebView</h3>
+        <p>只认「链接了 WebKit」会把邮件预览、内嵌帮助一并算进来，故要求同时带自有前端入口 HTML，并排除 Safari 扩展宿主与帮助文档目录。前者由 Safari 加载网页，不在应用自己的 WebView 里。</p>
       </div>
     </div>
   </div>

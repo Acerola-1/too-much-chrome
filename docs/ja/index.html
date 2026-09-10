@@ -37,7 +37,7 @@
     <img class="hero-icon fade-in" src="../images/icon.png" alt="Too Much Chrome icon" width="132" height="132">
     <h1 class="fade-in">Too Much Chrome</h1>
     <p class="tagline fade-in">あなたの Mac に、Web エンジンアプリがいくつ隠れているか。</p>
-    <p class="desc fade-in">Too Much Chrome は macOS 上の Chromium / WebView ベースのアプリ——Electron、CEF、NW.js、Tauri、Wails、そして Chrome・Edge・Brave などのフルブラウザ——をすべてスキャンし、ストレージ容量とエンジンのバージョン健康度を計測します。</p>
+    <p class="desc fade-in">Too Much Chrome は macOS 上で Chromium / WebView エンジンを内蔵するすべてのアプリ——Electron、CEF、NW.js、自社開発エンジン、Tauri、Wails、Flutter WebView、システム WebView、そして Chrome・Edge・Brave などのフルブラウザ——をスキャンし、ストレージ容量とエンジンのバージョン健康度を計測します。</p>
     <p class="punchline fade-in">名前はネタ、スキャンは本気。</p>
     <div class="hero-actions fade-in">
       <a class="btn btn-primary" href="https://github.com/Acerola-1/too-much-chrome/releases/latest" target="_blank" rel="noopener">最新版をダウンロード</a>
@@ -105,18 +105,23 @@
     <div class="tiers-grid">
       <div class="tier-card fade-in">
         <span class="tier-tag" style="background:rgba(52,199,89,.14);color:#1a8f3c">Tier 1 · 高精度</span>
-        <h3>Electron / CEF / NW.js</h3>
-        <p>フレームワークのディレクトリ名と Bundle ID の二重指紋で判別し、誤認はほぼありません。フレームワークをリネームしても（例: QQNT.framework）、Bundle ID の com.github.Electron は隠せません。</p>
+        <h3>Electron / CEF / NW.js / 自社開発</h3>
+        <p>フレームワークのディレクトリ名と Bundle ID の二重指紋で判別し、誤認はほぼありません。リネームしても（例: QQNT.framework）Bundle ID で分かり、Bundle ID まで差し替えたもの（ChatGPT）はフレームワークバイナリ内の家族マーカーと Chrome UA 文字列で判定します。どちらでもない Chromium 派生エンジンは独立した種別に：WeChat 本体は Qt アプリで、Chrome は同梱のミニプログラム実行環境由来です——「WebView で作られたアプリ」ではありませんが、その Chromium は実占有なので集計し、その旨を明示します。</p>
       </div>
       <div class="tier-card fade-in">
         <span class="tier-tag" style="background:rgba(255,159,10,.14);color:#b25000">Tier 2 · 実験的</span>
-        <h3>Tauri / Wails</h3>
-        <p>この二つは明確なフレームワーク指紋を残さないため、Bundle ID・リソースディレクトリ・バイナリ内のビルドパス痕跡から推測します。garble で難読化された Wails は検出できない既知の制限として、実験的と正直に表記しています。</p>
+        <h3>Tauri / Wails / Flutter</h3>
+        <p>いずれも独自の Chromium エンジンを持たないため、Bundle ID・リソースディレクトリ・バイナリ内のビルドパス痕跡から推測します。garble で難読化された Wails は検出できず、Flutter は FlutterMacOS と webview プラグインの両方が必要です——素の Flutter は自前描画であり Web 技術アプリではありません。制限は実験的と正直に表記しています。</p>
       </div>
       <div class="tier-card fade-in">
         <span class="tier-tag" style="background:rgba(142,142,147,.14);color:#6e6e73">Tier 3 · 一覧のみ</span>
         <h3>フルブラウザ</h3>
         <p>Chrome、Edge、Brave などのブラウザはそのまま一覧表示し、Chromium ベースラインでバージョンを評価。バージョン体系が特殊なものは、バイナリ内の UA 文字列で補完します。</p>
+      </div>
+      <div class="tier-card fade-in">
+        <span class="tier-tag" style="background:rgba(142,142,147,.14);color:#6e6e73">Tier 4 · 実験的</span>
+        <h3>システム WebView</h3>
+        <p>「WebKit をリンクしている」だけではメールプレビューや内蔵ヘルプまで拾ってしまうため、独自のフロントエンド HTML の同梱を要求し、Safari 拡張のホストとドキュメントディレクトリは除外します。拡張のページは Safari が読み込むもので、アプリ自身の WebView ではありません。</p>
       </div>
     </div>
   </div>

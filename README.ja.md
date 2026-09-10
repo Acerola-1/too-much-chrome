@@ -12,8 +12,9 @@
 
 <p align="center">
   Too Much Chrome は macOS 上の Chromium / WebView ベースのアプリ——Electron、CEF、NW.js、
-  Tauri、Wails、そして Chrome・Edge・Brave などのフルブラウザ——をすべてスキャンし、
-  ストレージ容量とエンジンのバージョン健康度を計測します。名前はネタ。スキャンは本気。
+  Tauri、Wails、Flutter WebView、システム WebView、そして Chrome・Edge・Brave などの
+  フルブラウザ——をすべてスキャンし、ストレージ容量とエンジンのバージョン健康度を計測します。
+  名前はネタ。スキャンは本気。
 </p>
 
 <p align="center">
@@ -50,12 +51,30 @@
 
 ### 本物のスキャン
 
-`/Applications` と `~/Applications` 直下の `.app` を列挙。Electron / CEF / NW.js は
-`Contents/Frameworks` のディレクトリ名と plist の Bundle ID の二重シグナルで判別し、
-ほぼ 100% の精度——リネームビルド（例: QQNT.framework）も `com.github.Electron.framework`
-を保持するため、ディレクトリ名に加えた第二の特徴になります。Tauri / Wails は Bundle ID /
-リソースディレクトリのキーワードとメインバイナリ内のビルドパス痕跡を使い、
-実験的であることを正直に表示します。
+`/Applications` と `~/Applications` の **2 階層** の `.app` を列挙（`Utilities/` や
+`<ブラウザ> Apps.localized/` 内の PWA ショートカットも含む）ただし `.app` の内部には
+入りません——そこはヘルパー子アプリであり、独立してインストールされたアプリではないためです。
+
+Electron / CEF / NW.js はフレームワークのディレクトリ名と plist の Bundle ID の二重シグナルで
+判別し、ほぼ 100% の精度——リネームビルド（例: QQNT.framework）も
+`com.github.Electron.framework` を保持するため、ディレクトリ名に加えた第二の特徴になります。
+Bundle ID まで自社製に差し替えたもの（例: ChatGPT の `Codex Framework`）は、フレームワーク
+バイナリ内の家族マーカー（`electron_browser` / `ELECTRON_` / `libcef` / `CefBrowser`）で家族を、
+埋め込まれた `Chrome/x.y.z.w` UA 文字列でエンジン版を判定します。エンジンのフレームワークは
+`Contents/Frameworks` に限りません——WeChat の XWeb は `Contents/MacOS/WeChatAppEx.app/` の
+中にあり、探索は子アプリ 1 階層まで下ります。
+
+どちらでもない Chromium 派生エンジンは**「自社開発エンジン」**という独立した種別になります。
+macOS 4.x の WeChat は Qt アプリ（`Contents/Resources/wechat.dylib`、327MB）で、Chrome は
+同梱のミニプログラム実行環境（XWeb、エンジン 144、387MB）由来です。「WebView で作られた
+アプリ」ではありませんが、その Chromium はディスク上の実占有なので集計し、独立した種別として
+表示し、詳細ポップオーバーで説明します——本ツールの尺度は「ディスク上に Chromium がどれだけあるか」です。
+
+Tauri / Wails は Bundle ID / リソースディレクトリのキーワードとメインバイナリ内のビルドパス痕跡を
+使います。Flutter WebView は `FlutterMacOS.framework` と webview プラグインの両方を要求します
+（素の Flutter は自前描画で Web 技術アプリではありません）。システム WebView は
+「WebKit をリンクし、かつ独自のフロントエンド HTML を持つ」ことを要求し、Safari 拡張のホストと
+ドキュメントディレクトリは除外します。後ろ 3 つは推測に基づくため、実験的であることを正直に表示します。
 
 ### 容量の計測
 
@@ -69,6 +88,12 @@ Bundle ID とアプリ名で二重照合し、重複を除いて集計します�
 Wails は Go module proxy）のオンラインベースラインと照合して 5 段階（緑 → 赤）で判定。
 ベースラインは 24 時間キャッシュされ、ソースごとにキャッシュ値へ、最後は内蔵アンカーへ
 フォールバックするので、オフラインでもそのまま使えます。
+
+フレームワークの plist にはエンジン版ではなくベンダーのアプリ版が書かれていることがあるため、
+版の扱いには規準があります。CEF ではメジャー 20 未満を一律に拒否し、フレームワークバイナリ内の
+`Chrome/` UA 文字列から実際のエンジン版を読み取ります（Netease Music の plist は 3.1.11、
+実エンジンは 116）。Electron は逆で、メジャーは 1 から合法——Electron 11 のような本当に古い
+ビルドは、きちんと「古い」と報告されなければなりません。
 
 ### スキャンライン演出
 
